@@ -1,9 +1,9 @@
-import type { VisitorPlan } from '@/contract/schemas';
+import type { VisitorPlan, TravelMode } from '@/contract/schemas';
 import samplePlan from '@/contract/samples/visitor-plan.json';
 
 export interface VisitorInput {
   originArea: string;
-  travelMode: string;
+  travelMode: TravelMode;
   stayingAt?: string | null;
   groupSize: number;
 }

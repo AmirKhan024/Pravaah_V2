@@ -10,9 +10,11 @@
     "howTravelling": "प्रवासाचे साधन",
     "travelModes": {
       "train": "ट्रेन",
-      "cab": "कॅब",
-      "own_vehicle": "स्वतःचे वाहन",
-      "bus": "बस"
+      "metro": "मेट्रो",
+      "bus": "बस",
+      "car": "कार",
+      "walk": "पायी",
+      "other": "इतर"
     },
     "stayingAt": "मुक्कामाचे ठिकाण",
     "stayingAtPlaceholder": "हॉटेलचे नाव (किंवा नाही)",
@@ -28,6 +30,7 @@
     "none": "काहीही नाही",
     "coachIncluded": "बस उपलब्ध",
     "why": "का?",
+    "whyStay": "हॉटेलमध्ये मुक्कामाची सोय.",
     "whyStayCoach": "हॉटेलसाठी खास बस सोय.",
     "whyStayNone": "हॉटेल आरक्षण नाही.",
     "whyTravel": "गर्दी टाळण्यासाठी उत्तम वेळ.",

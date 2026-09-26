@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import type { TravelMode } from '@/contract/schemas';
 import type { TranslationDictionary } from '@/lib/visitor/i18n';
 
 interface VisitorFormProps {
   dict: TranslationDictionary;
   onSubmit: (data: {
     originArea: string;
-    travelMode: string;
+    travelMode: TravelMode;
     stayingAt: string;
     groupSize: number;
   }) => void;
@@ -15,7 +16,7 @@ interface VisitorFormProps {
 
 export function VisitorForm({ dict, onSubmit }: VisitorFormProps) {
   const [originArea, setOriginArea] = useState('');
-  const [travelMode, setTravelMode] = useState('train');
+  const [travelMode, setTravelMode] = useState<TravelMode>('train');
   const [stayingAt, setStayingAt] = useState('');
   const [groupSize, setGroupSize] = useState(1);
 
@@ -29,11 +30,13 @@ export function VisitorForm({ dict, onSubmit }: VisitorFormProps) {
     });
   };
 
-  const travelModes = [
+  const travelModes: { key: TravelMode; label: string }[] = [
     { key: 'train', label: dict.form.travelModes.train },
-    { key: 'cab', label: dict.form.travelModes.cab },
-    { key: 'own_vehicle', label: dict.form.travelModes.own_vehicle },
+    { key: 'metro', label: dict.form.travelModes.metro },
     { key: 'bus', label: dict.form.travelModes.bus },
+    { key: 'car', label: dict.form.travelModes.car },
+    { key: 'walk', label: dict.form.travelModes.walk },
+    { key: 'other', label: dict.form.travelModes.other },
   ];
 
   return (

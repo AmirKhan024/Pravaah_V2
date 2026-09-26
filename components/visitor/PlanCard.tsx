@@ -19,7 +19,7 @@ export function PlanCard({ plan, dict, highlightedKeys }: PlanCardProps) {
   const stayWhy = plan.stay
     ? plan.stay.coach
       ? dict.plan.whyStayCoach
-      : dict.plan.whyStayCoach
+      : dict.plan.whyStay
     : dict.plan.whyStayNone;
 
   // Travel text (mode formatted)

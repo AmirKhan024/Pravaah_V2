@@ -10,9 +10,11 @@
     "howTravelling": "How travelling",
     "travelModes": {
       "train": "Train",
-      "cab": "Cab",
-      "own_vehicle": "Own vehicle",
-      "bus": "Bus"
+      "metro": "Metro",
+      "bus": "Bus",
+      "car": "Car",
+      "walk": "Walk",
+      "other": "Other"
     },
     "stayingAt": "Staying at",
     "stayingAtPlaceholder": "Hotel name (or None)",
@@ -28,6 +30,7 @@
     "none": "None",
     "coachIncluded": "Coach",
     "why": "Why?",
+    "whyStay": "Stay arranged at hotel.",
     "whyStayCoach": "Dedicated coach provided for hotel.",
     "whyStayNone": "No hotel stay requested.",
     "whyTravel": "Scheduled to avoid peak crowds.",

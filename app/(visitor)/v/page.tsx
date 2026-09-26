@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Lang } from '@/contract/schemas';
+import type { Lang, TravelMode } from '@/contract/schemas';
 import { getTranslations, getStoredLanguage, setStoredLanguage } from '@/lib/visitor/i18n';
 import { getVisitorPlan } from '@/lib/visitor/api';
 import { LanguageSelector } from '@/components/visitor/LanguageSelector';
@@ -25,7 +25,7 @@ export default function VisitorEntryPage() {
 
   const handleFormSubmit = async (formData: {
     originArea: string;
-    travelMode: string;
+    travelMode: TravelMode;
     stayingAt: string;
     groupSize: number;
   }) => {

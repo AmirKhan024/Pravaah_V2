@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
+import { APP_NAME } from '@/config/app';
 
 export const metadata: Metadata = {
-  title: 'Pravaah - Visitor Plan',
+  title: `${APP_NAME} - Visitor Plan`,
   description: 'Personalized event arrival and crowd plan',
 };
 
