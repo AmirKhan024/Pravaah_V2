@@ -63,3 +63,21 @@ export const VISITOR_PLAN_TEMPLATES = {
 } as const;
 
 export type VisitorPlanTemplateField = keyof (typeof VISITOR_PLAN_TEMPLATES)['en'];
+
+/**
+ * Calm/Watch/Act-now thresholds for the organiser console (lib/server/console/buildConsoleState.ts).
+ * Assumption, not a measurement — until a head has actually told us what wait/crush counts as
+ * dangerous for their venue.
+ */
+export const CONSOLE_STATUS_THRESHOLDS = {
+  /** gate wait, minutes */
+  gateWatchMin: 5,
+  gateActNowMin: 15,
+  /** engine CRUSH-density minutes attributable to one ablation cause */
+  crushWatchMin: 1,
+  crushActNowMin: 10,
+} as const;
+
+/** assumption: shown minutesLeft for a chosen lever the decision board didn't evaluate (outside
+ * its top MAX_BOARD_OPTIONS) — flagged `sample: true` so the UI never presents it as measured */
+export const CONSOLE_DEFAULT_MINUTES_LEFT = 30;

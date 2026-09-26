@@ -59,7 +59,20 @@ function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
+/** Real console route first; sample data (marked `sample: true`) only if that route fails. */
+async function fetchConsoleState(eventId: string): Promise<ConsoleState | null> {
+  try {
+    const res = await fetch(`/api/events/${eventId}/console`);
+    if (!res.ok) return null;
+    return (await res.json()) as ConsoleState;
+  } catch {
+    return null;
+  }
+}
+
 export async function getConsoleState(eventId: string): Promise<ConsoleState | null> {
+  const real = await fetchConsoleState(eventId);
+  if (real) return real;
   const store = getStore(eventId);
   return store ? clone(store.state) : null;
 }
@@ -75,7 +88,21 @@ export async function getOrders(eventId: string): Promise<OrderView[]> {
   return store ? clone(store.orders) : [];
 }
 
+async function postConsoleAction(eventId: string, body: Record<string, unknown>): Promise<SubmitResult | null> {
+  try {
+    const res = await fetch(`/api/events/${eventId}/console`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const payload = (await res.json().catch(() => null)) as unknown;
+    if (!res.ok) return { ok: false, error: (payload as { error?: string })?.error ?? 'request failed' };
+    return { ok: true };
+  } catch {
+    return null; // route unreachable — caller falls back to the sample store
+  }
+}
+
 export async function approveAction(eventId: string, actionId: string): Promise<SubmitResult> {
+  const real = await postConsoleAction(eventId, { action: 'approve', actionId });
+  if (real) return real;
+
   const store = getStore(eventId);
   if (!store) return { ok: false, error: 'unknown event' };
 
@@ -92,6 +119,9 @@ export async function approveAction(eventId: string, actionId: string): Promise<
 }
 
 export async function skipAction(eventId: string, actionId: string): Promise<SubmitResult> {
+  const real = await postConsoleAction(eventId, { action: 'skip', actionId });
+  if (real) return real;
+
   const store = getStore(eventId);
   if (!store) return { ok: false, error: 'unknown event' };
 
@@ -107,6 +137,9 @@ export async function skipAction(eventId: string, actionId: string): Promise<Sub
 }
 
 export async function publishPlan(eventId: string): Promise<SubmitResult> {
+  const real = await postConsoleAction(eventId, { action: 'publish' });
+  if (real) return real;
+
   const store = getStore(eventId);
   if (!store) return { ok: false, error: 'unknown event' };
   if (!store.state.canPublish) return { ok: false, error: 'nothing approved yet' };

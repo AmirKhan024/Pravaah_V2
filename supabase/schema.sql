@@ -134,6 +134,17 @@ create table if not exists simulation_results (
 );
 create index if not exists simulation_results_event_idx on simulation_results(event_id);
 
+-- Part 3: which state (pending/approved/skipped) each console SuggestedAction is currently in.
+-- Keyed by the action id buildConsoleState.ts derives (deterministic per event+lever), so this
+-- is safe to upsert repeatedly as the organiser approves/skips actions across console visits.
+create table if not exists console_actions (
+  event_id   text not null references events(id) on delete cascade,
+  action_id  text not null,
+  state      text not null default 'pending' check (state in ('pending', 'approved', 'skipped')),
+  updated_at timestamptz not null default now(),
+  primary key (event_id, action_id)
+);
+
 alter table venues          enable row level security;
 alter table venue_documents enable row level security;
 alter table events          enable row level security;
@@ -145,6 +156,7 @@ alter table visitor_plans   enable row level security;
 alter table live_reports    enable row level security;
 alter table ledger_entries      enable row level security;
 alter table simulation_results  enable row level security;
+alter table console_actions     enable row level security;
 
 -- plain PostgreSQL CREATE POLICY has no IF NOT EXISTS — drop-then-create is the idempotent form.
 drop policy if exists "anon can read venues" on venues;
@@ -179,3 +191,6 @@ create policy "anon can read ledger_entries" on ledger_entries for select using 
 
 drop policy if exists "anon can read simulation_results" on simulation_results;
 create policy "anon can read simulation_results" on simulation_results for select using (true);
+
+drop policy if exists "anon can read console_actions" on console_actions;
+create policy "anon can read console_actions" on console_actions for select using (true);
