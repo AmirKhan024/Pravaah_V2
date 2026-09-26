@@ -52,9 +52,9 @@ describe('buildGroups — stadium event', () => {
 
   it('merges below-minGroupSize routable groups into a "<Mode> -> <Gate>" group', () => {
     const { groups } = buildGroups(registrations, event, venue);
-    expect(groups.some((g) => g.label === 'Metro → Gate A')).toBe(true);
-    expect(groups.some((g) => g.label === 'Train → Gate C')).toBe(true);
-    expect(groups.some((g) => g.label === 'Car → Gate A')).toBe(true);
+    expect(groups.some((g) => g.label === 'Metro -> Gate A')).toBe(true);
+    expect(groups.some((g) => g.label === 'Train -> Gate C')).toBe(true);
+    expect(groups.some((g) => g.label === 'Car -> Gate A')).toBe(true);
   });
 
   it('routes car registrations via the parking transport point (no longer unrouted)', () => {

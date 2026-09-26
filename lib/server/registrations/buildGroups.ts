@@ -191,7 +191,7 @@ export function buildGroups(registrations: Registration[], event: Event, venue: 
         pulse: representative.pulse,
         path: representative.path,
         alt: representative.alt,
-        label: `${capitalize(cluster.travelMode)} → ${gateName(cluster.gateId)}`,
+        label: `${capitalize(cluster.travelMode)} -> ${gateName(cluster.gateId)}`,
       });
     }),
   ];
