@@ -1,0 +1,10 @@
+{
+  "sample": true,
+  "id": "doc_dy_patil_fire_noc",
+  "venueId": "venue_dy_patil",
+  "type": "fire_noc",
+  "fileUrl": "https://example.com/docs/dy-patil-fire-noc.pdf",
+  "extractedFields": { "capacity": 55000, "issued_to": "DY Patil Sports Academy", "valid_till": "2027-03-31" },
+  "expiry": "2027-03-31",
+  "mismatchFlags": ["capacity_differs_from_claimed"]
+}

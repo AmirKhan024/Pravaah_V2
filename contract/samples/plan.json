@@ -1,0 +1,13 @@
+{
+  "sample": true,
+  "id": "plan_stadium_v1",
+  "eventId": "event_stadium_final",
+  "status": "approved",
+  "approvedBy": "head@example.com",
+  "approvedAt": "2026-11-14T15:30:00Z",
+  "levers": [
+    { "type": "lanes", "gate": "gate_a", "n": 4, "from": 30, "label": "Open 4 extra lanes at Gate A" },
+    { "type": "shuttle", "link": "kharghar_metro_to_entrance_north", "add": 3, "vehicles": 6, "from": 15, "label": "3 extra shuttles from Kharghar Metro" },
+    { "type": "nudge", "cohort": "guests_kharghar_grand", "ask": "shift", "rupees": 150, "delta": 20, "decisionTick": 10, "label": "Nudge hotel guests to leave 20 min earlier" }
+  ]
+}

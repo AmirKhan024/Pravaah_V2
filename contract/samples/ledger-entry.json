@@ -1,0 +1,12 @@
+{
+  "sample": true,
+  "eventId": "event_stadium_final",
+  "seq": 1,
+  "ts": "2026-11-14T17:00:00Z",
+  "simClock": "17:00",
+  "type": "forecast_issued",
+  "summary": "Initial forecast issued at gates-open",
+  "payload": { "maxDen": 1.2 },
+  "prevHash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "hash": "b41e95c43f388d561b146326d84e3a6b9e31c4ef32ab97c04774c31aada3246a"
+}

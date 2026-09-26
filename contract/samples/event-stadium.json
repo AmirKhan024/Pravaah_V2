@@ -1,0 +1,57 @@
+{
+  "sample": true,
+  "id": "event_stadium_final",
+  "name": "Continental Cup Final",
+  "venueId": "venue_dy_patil",
+  "date": "2026-11-14",
+  "gatesOpen": "17:00",
+  "showStart": "19:30",
+  "endTime": "22:30",
+  "hotels": [
+    {
+      "id": "hotel_kharghar_grand",
+      "name": "Kharghar Grand",
+      "rooms": { "value": 180, "trust": "documented" },
+      "occupied": { "value": 150, "trust": "observed" },
+      "distanceToVenueM": { "value": 2200, "trust": "documented" },
+      "coachOption": true,
+      "coachCapacity": { "value": 45, "trust": "claimed" }
+    },
+    {
+      "id": "hotel_panvel_inn",
+      "name": "Panvel Inn",
+      "rooms": { "value": 90, "trust": "claimed" },
+      "occupied": { "value": 60, "trust": "claimed" },
+      "distanceToVenueM": { "value": 9500, "trust": "claimed" },
+      "coachOption": false,
+      "coachCapacity": null
+    }
+  ],
+  "transportOptions": [
+    {
+      "id": "opt_metro",
+      "mode": "metro",
+      "transportPointId": "tp_kharghar_metro",
+      "timetable": [
+        { "arrivalTime": "17:10", "pulseSize": { "value": 2200, "trust": "observed" } },
+        { "arrivalTime": "17:40", "pulseSize": { "value": 3400, "trust": "observed" } },
+        { "arrivalTime": "18:10", "pulseSize": { "value": 4100, "trust": "claimed" } }
+      ]
+    },
+    {
+      "id": "opt_train",
+      "mode": "train",
+      "transportPointId": "tp_panvel_station",
+      "timetable": [
+        { "arrivalTime": "17:05", "pulseSize": { "value": 1800, "trust": "observed" } },
+        { "arrivalTime": "17:35", "pulseSize": { "value": 2600, "trust": "claimed" } }
+      ]
+    },
+    {
+      "id": "opt_bus",
+      "mode": "bus",
+      "transportPointId": "tp_bus_stand",
+      "timetable": [{ "arrivalTime": "17:15", "pulseSize": { "value": 900, "trust": "claimed" } }]
+    }
+  ]
+}

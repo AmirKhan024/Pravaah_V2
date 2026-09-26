@@ -1,0 +1,13 @@
+{
+  "sample": true,
+  "id": "visitor_plan_0001",
+  "eventId": "event_stadium_final",
+  "registrationId": "reg_stadium_0001",
+  "stay": { "hotelName": "Kharghar Grand", "coach": true },
+  "travel": { "mode": "metro", "departTime": "17:10" },
+  "gate": "Gate A",
+  "leaveTime": "18:40",
+  "food": { "zoneName": "North Concourse Food Court", "window": "18:00-19:00" },
+  "language": "hi",
+  "version": 1
+}

@@ -1,0 +1,28 @@
+{
+  "sample": true,
+  "id": "event_procession_visarjan",
+  "name": "Ganesh Visarjan Procession",
+  "venueId": "venue_procession_route",
+  "date": "2026-09-06",
+  "gatesOpen": "14:00",
+  "showStart": "16:00",
+  "endTime": "23:00",
+  "hotels": [],
+  "transportOptions": [
+    {
+      "id": "opt_train_lalbaug",
+      "mode": "train",
+      "transportPointId": "tp_lalbaug_station",
+      "timetable": [
+        { "arrivalTime": "14:20", "pulseSize": { "value": 5000, "trust": "claimed" } },
+        { "arrivalTime": "15:20", "pulseSize": { "value": 7000, "trust": "claimed" } }
+      ]
+    },
+    {
+      "id": "opt_bus_girgaon",
+      "mode": "bus",
+      "transportPointId": "tp_bus_girgaon",
+      "timetable": [{ "arrivalTime": "15:00", "pulseSize": { "value": 1200, "trust": "claimed" } }]
+    }
+  ]
+}

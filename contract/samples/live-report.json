@@ -1,0 +1,8 @@
+{
+  "sample": true,
+  "id": "report_0001",
+  "eventId": "event_stadium_final",
+  "source": "gate_scan",
+  "payload": { "gateId": "gate_a", "scansLastMinute": 340, "queueEstimateM": 60 },
+  "time": "2026-11-14T18:05:00Z"
+}

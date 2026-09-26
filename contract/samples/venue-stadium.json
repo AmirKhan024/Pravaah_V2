@@ -1,0 +1,30 @@
+{
+  "sample": true,
+  "id": "venue_dy_patil",
+  "name": "Dr. DY Patil Stadium",
+  "city": "Navi Mumbai",
+  "lat": 19.0453,
+  "lng": 73.0328,
+  "totalAreaM2": { "value": 480000, "trust": "documented" },
+  "capacity": { "value": 55000, "trust": "documented" },
+  "gates": [
+    { "id": "gate_a", "name": "Gate A", "lanes": { "value": 10, "trust": "observed" }, "laneRate": { "value": 28, "trust": "claimed" }, "forecourtAreaM2": { "value": 2200, "trust": "claimed" } },
+    { "id": "gate_b", "name": "Gate B", "lanes": { "value": 8, "trust": "documented" }, "laneRate": { "value": 26, "trust": "claimed" }, "forecourtAreaM2": { "value": 1800, "trust": "claimed" } },
+    { "id": "gate_c", "name": "Gate C", "lanes": { "value": 6, "trust": "claimed" }, "laneRate": { "value": 24, "trust": "claimed" }, "forecourtAreaM2": { "value": 1500, "trust": "claimed" } }
+  ],
+  "parking": [
+    { "id": "parking_north", "name": "North Parking", "capacity": { "value": 1200, "trust": "documented" }, "areaM2": { "value": 30000, "trust": "documented" } },
+    { "id": "parking_south", "name": "South Parking", "capacity": { "value": 800, "trust": "claimed" }, "areaM2": { "value": 20000, "trust": "claimed" } }
+  ],
+  "transportPoints": [
+    { "id": "tp_panvel_station", "name": "Panvel Railway Station", "type": "train_station", "lat": 18.9894, "lng": 73.1175 },
+    { "id": "tp_kharghar_metro", "name": "Kharghar Metro Station", "type": "metro_station", "lat": 19.047, "lng": 73.067 },
+    { "id": "tp_bus_stand", "name": "Kharghar Bus Stand", "type": "bus_stop", "lat": 19.048, "lng": 73.065 },
+    { "id": "tp_parking_north", "name": "North Parking (transport point)", "type": "parking", "lat": 19.047, "lng": 73.03 },
+    { "id": "tp_dropoff", "name": "Cab Drop-off", "type": "drop_off", "lat": 19.046, "lng": 73.0335 }
+  ],
+  "entrances": [
+    { "id": "entrance_north", "name": "North Entrance", "transportPointIds": ["tp_kharghar_metro", "tp_bus_stand", "tp_parking_north"], "gateIds": ["gate_a", "gate_b"] },
+    { "id": "entrance_south", "name": "South Entrance", "transportPointIds": ["tp_panvel_station", "tp_dropoff"], "gateIds": ["gate_c"] }
+  ]
+}
