@@ -114,7 +114,11 @@ create index if not exists live_reports_event_idx on live_reports(event_id);
 create table if not exists ledger_entries (
   event_id   text not null references events(id) on delete cascade,
   seq        integer not null,
-  ts         timestamptz not null,
+  -- `text`, not `timestamptz`: the hash chain hashes this exact string (see hash.ts's
+  -- computeHash) — a typed timestamp column round-trips through Postgres's own formatting and
+  -- comes back different from what was inserted, breaking every hash. Plain text preserves it
+  -- byte-for-byte, same reasoning as sim_clock already being text.
+  ts         text not null,
   sim_clock  text not null,
   type       text not null,
   summary    text not null,
@@ -124,6 +128,7 @@ create table if not exists ledger_entries (
   created_at timestamptz not null default now(),
   primary key (event_id, seq)
 );
+alter table ledger_entries alter column ts type text using ts::text;
 
 -- Step 2: one row per simulate() run — the summary app/api/events/[id]/simulate/route.ts returns.
 create table if not exists simulation_results (

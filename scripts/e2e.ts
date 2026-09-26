@@ -130,9 +130,13 @@ async function runEvent(label: string, eventFile: string, venueFile: string, csv
 }
 
 async function main() {
+  // the large CSVs, not -small: at small-sample scale crush is genuinely 0 (see Part 1's
+  // diagnosis), so there's nothing for the optimiser to suggest and "approve an action" has
+  // nothing to approve. That's correct behavior for that data, not a bug — but it means the
+  // small fixture can't exercise approve/publish/visitor-plan, which do need a real crush.
   const all: Array<{ event: string; results: StepResult[] }> = [];
-  all.push({ event: 'stadium', results: await runEvent('stadium', 'event-stadium.json', 'venue-stadium.json', 'registrations-stadium-small.csv') });
-  all.push({ event: 'procession', results: await runEvent('procession', 'event-procession.json', 'venue-procession.json', 'registrations-procession-small.csv') });
+  all.push({ event: 'stadium', results: await runEvent('stadium', 'event-stadium.json', 'venue-stadium.json', 'registrations-stadium.csv') });
+  all.push({ event: 'procession', results: await runEvent('procession', 'event-procession.json', 'venue-procession.json', 'registrations-procession.csv') });
 
   let anyFail = false;
   for (const { event, results } of all) {
