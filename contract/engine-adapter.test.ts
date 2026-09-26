@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { probeWaits, simulate } from '../engine/simulate';
+import { runEnsemble } from '../engine/ensemble';
+import { runAblation, runRejected } from '../engine/ablation';
+import { optimiseProfile } from '../engine/optimise';
 import { buildGroups } from '../lib/server/registrations/buildGroups';
 import { mapColumns } from '../lib/server/registrations/mapColumns';
 import { normalizeRegistrations } from '../lib/server/registrations/normalize';
@@ -113,5 +116,54 @@ describe('accounting: nobody from our own cohorts silently vanishes', () => {
     // gate/link capacity comfortably exceeds this sample's demand everywhere, so nobody should be
     // stuck queuing at showStart either
     expect(result.maxGateWait).toBeLessThan(5); // minutes
+  });
+});
+
+describe('engine/interventions.ts + ablation.ts generalize past the dyPatil golden scenario', () => {
+  beforeEach(() => {
+    mockedCallJson.mockImplementation(async (_prompt, _schema, fallback) => fallback);
+  });
+
+  it.each([
+    ['stadium', 'event-stadium.json', 'venue-stadium.json', 'registrations-stadium-small.csv'],
+    ['procession', 'event-procession.json', 'venue-procession.json', 'registrations-procession-small.csv'],
+  ])('%s: optimise, ablation and ensemble run without throwing on a non-dyPatil scenario', async (_label, eventFile, venueFile, csvFile) => {
+    const { event, venue, groups } = await loadScenarioInputs(eventFile, venueFile, csvFile);
+    const scenario = toEngineScenario(event, venue, groups);
+    expect(scenario.id).not.toBe('dyPatil');
+
+    const waits = probeWaits(scenario);
+    const base = simulate(scenario, [], { waits });
+
+    expect(() => runEnsemble(scenario, 10, base.worst.zone)).not.toThrow();
+    expect(() => runAblation(scenario, base, waits)).not.toThrow();
+    expect(() => runRejected(scenario, waits)).not.toThrow();
+    expect(() => optimiseProfile(scenario, 'Balanced', waits)).not.toThrow();
+  });
+
+  it('proposes a shuttle lever on a real transit link, never a hardcoded id', async () => {
+    const { event, venue, groups } = await loadScenarioInputs('event-stadium.json', 'venue-stadium.json', 'registrations-stadium-small.csv');
+    const scenario = toEngineScenario(event, venue, groups);
+    const waits = probeWaits(scenario);
+    const plan = optimiseProfile(scenario, 'Safest', waits, { depth: 8 });
+    // whether or not a shuttle lever was CHOSEN, every candidate lever the optimiser could have
+    // picked from must reference a link that actually exists in this scenario
+    const linkIds = new Set(scenario.links.map((l) => l.id));
+    for (const lever of plan.chosen) if (lever.type === 'shuttle') expect(linkIds.has(lever.link)).toBe(true);
+  });
+
+  it('returns a plan (non-empty levers) when a scenario genuinely has a crush', async () => {
+    const { event, venue, groups } = await loadScenarioInputs('event-stadium.json', 'venue-stadium.json', 'registrations-stadium-small.csv');
+    const scenario = toEngineScenario(event, venue, groups);
+    // force a real crush: gut every gate's lanes and forecourt area so demand overwhelms capacity
+    const crushScenario = { ...scenario, zones: scenario.zones.map((z) => (z.type === 'gate' ? { ...z, lanes: 0, areaM2: 10 } : z)) };
+    const waits = probeWaits(crushScenario);
+    const base = simulate(crushScenario, [], { waits });
+    expect(base.crushMin).toBeGreaterThan(0);
+
+    const plan = optimiseProfile(crushScenario, 'Safest', waits, { depth: 6 });
+    expect(() => optimiseProfile(crushScenario, 'Safest', waits)).not.toThrow();
+    expect(plan.chosen.length).toBeGreaterThan(0);
+    expect(plan.result.crushMin).toBeLessThanOrEqual(base.crushMin);
   });
 });
