@@ -189,6 +189,7 @@ export const PulseSchema = z.object({
   width: z.number(),
   offset: z.number(),
 });
+export type Pulse = z.infer<typeof PulseSchema>;
 
 export const CrowdGroupSchema = z.object({
   id: z.string(),

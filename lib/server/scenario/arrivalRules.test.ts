@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { EventSchema, VenueSchema } from '../../../contract/schemas';
-import { deriveArrival, derivePath, findMatchingTransportOption, parseHHMM } from './arrivalRules';
+import { deriveArrival, derivePath, derivePulse, findMatchingTransportOption, parseHHMM } from './arrivalRules';
 
 const samplesDir = path.join(import.meta.dirname, '../../../contract/samples');
 const readJSON = (name: string) => JSON.parse(readFileSync(path.join(samplesDir, name), 'utf8'));
@@ -53,48 +53,63 @@ describe('derivePath', () => {
   });
 });
 
-describe('deriveArrival', () => {
-  it('uses the assumed single-pulse std for a one-entry timetable', () => {
-    const busOption = findMatchingTransportOption('bus', event)!;
-    expect(busOption.timetable).toHaveLength(1);
-    const { std } = deriveArrival({ option: busOption, venue, event });
-    expect(std).toBe(15);
+describe('deriveArrival — anchored to showStart, per mode', () => {
+  it('anchors car to config.showAnchoredArrival.car (peakBeforeShowMin=70, spreadMin=25)', () => {
+    const carOption = findMatchingTransportOption('car', event)!;
+    const { mean, std, withinShowWindow } = deriveArrival({ option: carOption, event });
+    const gatesOpenMin = parseHHMM(event.gatesOpen);
+    const showStartMin = parseHHMM(event.showStart);
+    expect(mean + gatesOpenMin).toBe(showStartMin - 70);
+    expect(std).toBe(25);
+    expect(withinShowWindow).toBe(true);
   });
 
-  it('produces a pulseSize-weighted mean between the timetable entries for a multi-entry option', () => {
-    const trainOption = findMatchingTransportOption('train', event)!;
-    const times = trainOption.timetable.map((t) => parseHHMM(t.arrivalTime));
-    const { mean, std } = deriveArrival({ option: trainOption, venue, event });
+  it('never depends on the timetable\'s own entries — same anchor regardless of pulse count', () => {
+    const busOption = findMatchingTransportOption('bus', event)!; // 1 timetable entry
+    const trainOption = findMatchingTransportOption('train', event)!; // 2 entries, different mode
+    const bus = deriveArrival({ option: busOption, event });
+    // bus and car share no config values, but bus's own mean must match its OWN mode's anchor,
+    // not anything derived from busOption.timetable[0].arrivalTime
     const gatesOpenMin = parseHHMM(event.gatesOpen);
-    // mean is ticks relative to gatesOpen; undo that to sanity-check against the raw timetable window
+    const showStartMin = parseHHMM(event.showStart);
+    expect(bus.mean + gatesOpenMin).toBe(showStartMin - 100);
+    expect(trainOption.timetable.length).toBeGreaterThan(1);
+  });
+
+  it('clamps into [gatesOpen, showStart] rather than ever falling outside it', () => {
+    const anyOption = findMatchingTransportOption('metro', event)!;
+    const { mean } = deriveArrival({ option: anyOption, event });
+    const gatesOpenMin = parseHHMM(event.gatesOpen);
+    const showStartMin = parseHHMM(event.showStart);
     const arrivalAtGateMin = mean + gatesOpenMin;
-    expect(arrivalAtGateMin).toBeGreaterThan(Math.min(...times));
-    expect(arrivalAtGateMin).toBeLessThan(Math.max(...times) + 90); // + generous travel-time margin (road speed beyond walkLimitM)
-    expect(std).toBeGreaterThan(5);
-    expect(std).toBeLessThan(30);
+    expect(arrivalAtGateMin).toBeGreaterThanOrEqual(gatesOpenMin);
+    expect(arrivalAtGateMin).toBeLessThanOrEqual(showStartMin);
   });
 
   it('is deterministic — same input, same output', () => {
     const metroOption = findMatchingTransportOption('metro', event)!;
-    const a = deriveArrival({ option: metroOption, venue, event });
-    const b = deriveArrival({ option: metroOption, venue, event });
+    const a = deriveArrival({ option: metroOption, event });
+    const b = deriveArrival({ option: metroOption, event });
     expect(a).toEqual(b);
   });
+});
 
-  it('flags withinShowWindow=false rather than silently correcting an out-of-window arrival', () => {
-    const lateOption = {
-      id: 'opt_test_late',
-      mode: 'bus' as const,
-      transportPointId: 'tp_bus_stand',
-      timetable: [{ arrivalTime: '23:00', pulseSize: { value: 100, trust: 'observed' as const } }],
-    };
-    const { withinShowWindow } = deriveArrival({ option: lateOption, venue, event });
-    expect(withinShowWindow).toBe(false);
+describe('derivePulse', () => {
+  it('gives rail modes (train, metro) a period/width derived from timetable spacing', () => {
+    const metroOption = findMatchingTransportOption('metro', event)!; // 17:10, 17:40, 18:10 -> 30min gaps
+    const pulse = derivePulse(metroOption);
+    expect(pulse).toEqual({ period: 30, width: 9, offset: 0 });
   });
 
-  it('flags an on-time arrival as within the show window', () => {
+  it('gives no pulse for a rail option with only one timetable entry (no spacing to derive)', () => {
+    const trainOption = findMatchingTransportOption('train', event)!;
+    // event-stadium.json's train option has 2 entries; construct a 1-entry variant to test the guard
+    const oneEntry = { ...trainOption, timetable: [trainOption.timetable[0]] };
+    expect(derivePulse(oneEntry)).toBeUndefined();
+  });
+
+  it('gives no pulse for a non-rail mode (bus, car, walk)', () => {
     const busOption = findMatchingTransportOption('bus', event)!;
-    const { withinShowWindow } = deriveArrival({ option: busOption, venue, event });
-    expect(withinShowWindow).toBe(true);
+    expect(derivePulse(busOption)).toBeUndefined();
   });
 });

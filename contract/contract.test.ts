@@ -18,7 +18,7 @@ const readJSON = (name: string) => JSON.parse(readFileSync(path.join(samplesDir,
 /** Splits on plain commas — every fixture row is generated without embedded commas, so this needs
  * no quoting/escaping logic. */
 function parseCSV(text: string): { header: string[]; rows: string[][] } {
-  const lines = text.trim().split('\n');
+  const lines = text.trim().split(/\r?\n/);
   const header = lines[0].split(',');
   const rows = lines.slice(1).map((line) => line.split(','));
   return { header, rows };
