@@ -8,6 +8,7 @@ import type { Lever } from '../../../../../engine/interventions';
 import { optimiseProfile } from '../../../../../engine/optimise';
 import { probeWaits, simulate } from '../../../../../engine/simulate';
 import { buildConsoleState, type ActionState } from '../../../../../lib/server/console/buildConsoleState';
+import { buildFlowBoard } from '../../../../../lib/server/console/buildFlowBoard';
 import { publishPlan } from '../../../../../lib/server/publish/publish';
 import { getServiceRoleClient } from '../../../../../lib/server/supabase/client';
 
@@ -60,7 +61,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const { data: publishedPlan } = await supabase.from('plans').select('id').eq('event_id', eventId).eq('status', 'published').maybeSingle();
 
     const state = await buildConsoleState({ ...built, actionStates, published: !!publishedPlan });
-    return NextResponse.json(state);
+    const flowBoard = buildFlowBoard(built.scenario, built.base);
+    return NextResponse.json({ ...state, flowBoard });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'could not build console state' }, { status: 500 });
   }
@@ -95,7 +97,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const built = await loadScenarioAndPlan(supabase, eventId);
       const actionStates = await loadActionStates(supabase, eventId);
       const { data: publishedPlan } = await supabase.from('plans').select('id').eq('event_id', eventId).eq('status', 'published').maybeSingle();
-      return NextResponse.json(await buildConsoleState({ ...built, actionStates, published: !!publishedPlan }));
+      const consoleState = await buildConsoleState({ ...built, actionStates, published: !!publishedPlan });
+      const flowBoard = buildFlowBoard(built.scenario, built.base);
+      return NextResponse.json({ ...consoleState, flowBoard });
     }
 
     if (b.action === 'publish') {

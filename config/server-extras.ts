@@ -81,3 +81,18 @@ export const CONSOLE_STATUS_THRESHOLDS = {
 /** assumption: shown minutesLeft for a chosen lever the decision board didn't evaluate (outside
  * its top MAX_BOARD_OPTIONS) — flagged `sample: true` so the UI never presents it as measured */
 export const CONSOLE_DEFAULT_MINUTES_LEFT = 30;
+
+/**
+ * Calm/Watch/Act-now thresholds for the flow board's per-node/per-link load (occupancy or flow
+ * over capacity — see lib/server/console/buildFlowBoard.ts). Assumption, not a measurement, same
+ * spirit as CONSOLE_STATUS_THRESHOLDS above.
+ */
+export const FLOW_BOARD_STATUS_THRESHOLDS = {
+  watch: 0.5,
+  actNow: 0.7,
+} as const;
+
+/** Hard cap on FlowBoard.nodes (spec-given, not tunable): a venue with more transport-point
+ * zones than fit under it gets the overflow folded into one "other approaches" node — see
+ * buildFlowBoard.ts. */
+export const FLOW_BOARD_MAX_NODES = 25;
