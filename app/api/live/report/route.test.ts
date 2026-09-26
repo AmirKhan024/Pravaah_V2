@@ -14,9 +14,9 @@ function buildRequest(body: unknown): Request {
 }
 
 /** A single stand-in client whose tables all resolve to harmless defaults, so any code path that
- * touches Supabase (insert, events lookup for tick, ledger lookup for drift baseline, zone count) has
- * something reasonable to chain against. */
-function baseSupabaseMock(overrides: { ledgerPayload?: unknown; zoneCount?: number } = {}) {
+ * touches Supabase (insert, events lookup for tick, simulation_results lookup for drift baseline,
+ * zone count) has something reasonable to chain against. */
+function baseSupabaseMock(overrides: { simulationResultData?: unknown; zoneCount?: number } = {}) {
   const insert = vi.fn().mockResolvedValue({ error: null });
   return {
     from: (table: string) => {
@@ -37,15 +37,13 @@ function baseSupabaseMock(overrides: { ledgerPayload?: unknown; zoneCount?: numb
       if (table === 'events') {
         return { select: () => ({ eq: () => ({ single: async () => ({ data: { data: { gatesOpen: '17:00' } }, error: null }) }) }) };
       }
-      if (table === 'ledger_entries') {
+      if (table === 'simulation_results') {
         return {
           select: () => ({
             eq: () => ({
-              eq: () => ({
-                order: () => ({
-                  limit: () => ({
-                    maybeSingle: async () => ({ data: overrides.ledgerPayload ? { payload: overrides.ledgerPayload } : null, error: null }),
-                  }),
+              order: () => ({
+                limit: () => ({
+                  maybeSingle: async () => ({ data: overrides.simulationResultData ? { data: overrides.simulationResultData } : null, error: null }),
                 }),
               }),
             }),
@@ -83,7 +81,7 @@ describe('POST /api/live/report', () => {
   });
 
   it('flags drift on a gate_scan far from the last saved simulation result', async () => {
-    mockedGetClient.mockReturnValue(baseSupabaseMock({ ledgerPayload: { expectedCountsPerGate: { gate_a: 500 } } }) as never);
+    mockedGetClient.mockReturnValue(baseSupabaseMock({ simulationResultData: { expectedCountsPerGate: { gate_a: 500 } } }) as never);
     const res = await POST(buildRequest({ eventId: 'event_stadium_final', source: 'gate_scan', payload: { gateId: 'gate_a', count: 900 } }));
     const body = await res.json();
 

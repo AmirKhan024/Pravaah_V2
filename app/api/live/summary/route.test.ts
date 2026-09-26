@@ -25,8 +25,8 @@ describe('GET /api/live/summary', () => {
         if (table === 'live_reports') {
           return { select: () => ({ eq: () => ({ gte: () => ({ order: async () => ({ data: rows, error: null }) }) }) }) };
         }
-        if (table === 'ledger_entries') {
-          return { select: () => ({ eq: () => ({ eq: () => ({ order: () => ({ limit: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }) }) }) }) };
+        if (table === 'simulation_results') {
+          return { select: () => ({ eq: () => ({ order: () => ({ limit: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }) }) }) };
         }
         throw new Error(`unexpected table ${table}`);
       },

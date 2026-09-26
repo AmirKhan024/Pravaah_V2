@@ -2,10 +2,11 @@ import { z } from 'zod';
 import { GATE_SCAN_DRIFT_THRESHOLD } from '../../../config/server-extras';
 import { getServiceRoleClient } from '../supabase/client';
 
-const ForecastPayloadSchema = z
+const SimulationResultPayloadSchema = z
   .object({
-    /** gateId -> expected arrivals for the window this gate_scan report covers. Shape guessed —
-     * the engine-side "forecast_issued" producer doesn't exist yet on this branch (see summary). */
+    /** gateId -> expected arrivals for the window this gate_scan report covers. Not yet written by
+     * app/api/events/[id]/simulate/route.ts's summary (see branch summary) — absent means "no
+     * baseline yet", never a drift, until that route's summary grows this field. */
     expectedCountsPerGate: z.record(z.string(), z.number()).optional(),
   })
   .passthrough();
@@ -16,22 +17,22 @@ export interface DriftCheckResult {
   reason: string;
 }
 
-/** Baseline = the latest 'forecast_issued' ledger entry for the event (LedgerType already has this
- * exact type — see contract/schemas.ts). Missing/malformed payload means "no baseline yet", never a drift. */
+/** Baseline = the latest row in simulation_results for the event (see
+ * app/api/events/[id]/simulate/route.ts — the actual "last saved simulation result"). Missing or
+ * malformed data means "no baseline yet", never a drift. */
 export async function findExpectedGateCount(eventId: string, gateId: string): Promise<number | null> {
   try {
     const supabase = getServiceRoleClient();
     const { data, error } = await supabase
-      .from('ledger_entries')
-      .select('payload')
+      .from('simulation_results')
+      .select('data')
       .eq('event_id', eventId)
-      .eq('type', 'forecast_issued')
-      .order('seq', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
     if (error || !data) return null;
 
-    const parsed = ForecastPayloadSchema.safeParse(data.payload);
+    const parsed = SimulationResultPayloadSchema.safeParse(data.data);
     if (!parsed.success) return null;
     return parsed.data.expectedCountsPerGate?.[gateId] ?? null;
   } catch {
