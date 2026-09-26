@@ -1,0 +1,45 @@
+{
+  "appTitle": "व्हिजिटर प्लॅन",
+  "language": "भाषा",
+  "langEn": "English",
+  "langHi": "हिंदी",
+  "langMr": "मराठी",
+  "form": {
+    "comingFrom": "येण्याचे ठिकाण",
+    "comingFromPlaceholder": "भाग किंवा शहर",
+    "howTravelling": "प्रवासाचे साधन",
+    "travelModes": {
+      "train": "ट्रेन",
+      "metro": "मेट्रो",
+      "bus": "बस",
+      "car": "कार",
+      "walk": "पायी",
+      "other": "इतर"
+    },
+    "stayingAt": "मुक्कामाचे ठिकाण",
+    "stayingAtPlaceholder": "हॉटेलचे नाव (किंवा नाही)",
+    "peopleInGroup": "गटातील व्यक्ती",
+    "submit": "माझा प्लॅन मिळवा"
+  },
+  "plan": {
+    "stayLabel": "Stay",
+    "travelLabel": "Travel",
+    "gateLabel": "Gate",
+    "leaveAtLabel": "Leave at",
+    "eatLabel": "Eat",
+    "none": "काहीही नाही",
+    "coachIncluded": "बस उपलब्ध",
+    "why": "का?",
+    "whyStay": "हॉटेलमध्ये मुक्कामाची सोय.",
+    "whyStayCoach": "हॉटेलसाठी खास बस सोय.",
+    "whyStayNone": "हॉटेल आरक्षण नाही.",
+    "whyTravel": "गर्दी टाळण्यासाठी उत्तम वेळ.",
+    "whyGate": "प्रवासासाठी जलद प्रवेश द्वार.",
+    "whyLeaveAt": "कार्यक्रमानंतर गर्दी टाळण्यासाठी वेळ.",
+    "whyEat": "जेवणासाठी राखीव वेळ."
+  },
+  "banner": {
+    "planUpdated": "प्लॅन अद्यतनित",
+    "seeChanges": "बदल पहा"
+  }
+}
