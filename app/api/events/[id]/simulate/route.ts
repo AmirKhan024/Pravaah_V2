@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { toEngineScenario } from '../../../../../contract/engine-adapter';
 import { CrowdGroupSchema, EventSchema, VenueSchema } from '../../../../../contract/schemas';
+import { computePeopleAccounting } from '../../../../../lib/server/console/peopleAccounting';
 import { minutesToClock } from '../../../../../lib/server/scenario/arrivalRules';
 import { getServiceRoleClient } from '../../../../../lib/server/supabase/client';
 import { probeWaits, simulate } from '../../../../../engine/simulate';
@@ -39,6 +40,15 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (groupError) return NextResponse.json({ error: groupError.message }, { status: 500 });
   const groups = (groupRows ?? []).map((r) => CrowdGroupSchema.parse(r.data));
 
+  // people-conservation input: how many registered PEOPLE (sum of groupSize, not rows) never got
+  // routed into a crowd group at all (see buildGroups.ts) — needed so entered+missed+inTransit+
+  // unrouted adds up to every person who registered, not just the routed ones.
+  const { data: regRows } = await supabase.from('registrations').select('group_id, data').eq('event_id', eventId);
+  let unroutedPeople = 0;
+  for (const r of regRows ?? []) {
+    if (r.group_id == null) unroutedPeople += (r.data as { normalized?: { groupSize?: number } })?.normalized?.groupSize ?? 0;
+  }
+
   const event = eventParsed.data;
   const venue = venueParsed.data;
   const scenario = toEngineScenario(event, venue, groups);
@@ -51,6 +61,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   const clock = (tick: number) => minutesToClock(scenario.t0Min + tick);
   const firstDangerousTick = base.crushSeries.findIndex((v) => v > 0);
+  const accounting = computePeopleAccounting(scenario, base, unroutedPeople);
 
   // expectedCountsPerGate: total simulated throughput at each gate's concourse link, summed
   // across every frame's flow — the baseline lib/server/live/gateScanDrift.ts compares a live
@@ -68,7 +79,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     firstDangerousMinute: firstDangerousTick >= 0 ? clock(firstDangerousTick) : null,
     peakDensity: Math.round(base.worst.den * 100) / 100,
     peakZone: scenario.zones[base.worst.zone]?.name ?? scenario.zones[base.worst.zone]?.id ?? null,
-    missedShow: base.missed,
+    // people-relative (see peopleAccounting.ts): entered + missed + stillInTransit + unrouted ==
+    // totalRegistered, always. NOT engine's own SimResult.missed (capacity-relative, kept below
+    // for reference only — it answers "how many empty seats", a different question).
+    missedShow: accounting.missed,
+    accounting,
+    venueCapacityGap: base.missed,
     dangerProbability: ensemble.p,
     topPlan: {
       levers: plan.chosen.map((c) => c.label),

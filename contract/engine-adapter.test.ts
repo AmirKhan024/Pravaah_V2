@@ -9,6 +9,7 @@ import { buildGroups } from '../lib/server/registrations/buildGroups';
 import { mapColumns } from '../lib/server/registrations/mapColumns';
 import { normalizeRegistrations } from '../lib/server/registrations/normalize';
 import { callJson } from '../lib/server/llm/groq';
+import { computePeopleAccounting } from '../lib/server/console/peopleAccounting';
 import { toEngineScenario } from './engine-adapter';
 import { EventSchema, VenueSchema } from './schemas';
 
@@ -97,37 +98,27 @@ describe('toEngineScenario', () => {
   });
 });
 
-describe('accounting: nobody from our own cohorts silently vanishes', () => {
+describe('people conservation: entered + missed + stillInTransit + unrouted == totalRegistered', () => {
   /**
-   * SimResult.missed = venue CAPACITY minus arrived (engine/simulate.ts) — it's relative to the
-   * venue's full capacity, not to our (much smaller) registered sample, so it's expected to be
-   * large whenever a sample is a fraction of capacity. That is NOT what this test checks. This
-   * checks a different, sample-relative invariant: every person WE registered is accounted for —
-   * either they arrived, or they're still moving through a zone/link — and none of them are stuck
-   * given that gate/link capacity comfortably exceeds their demand (confirmed separately: peak
-   * demand at every gate and approach link is under 10% of its capacity for this sample).
+   * This is people-relative, not engine's own SimResult.missed (venue CAPACITY minus arrived —
+   * capacity-relative, can dwarf the number of people who ever registered). See
+   * lib/server/console/peopleAccounting.ts, the one place this is computed for real routes.
+   * Fails on ANY scenario where the sum doesn't match exactly — that's the point of this test.
    */
-  it('stadium: cohort total = arrived + still in transit, with ~0 unaccounted for', async () => {
-    const { event, venue, groups } = await loadScenarioInputs('event-stadium.json', 'venue-stadium.json', 'registrations-stadium-small.csv');
+  it.each([
+    ['stadium (small)', 'event-stadium.json', 'venue-stadium.json', 'registrations-stadium-small.csv'],
+    ['stadium (large, real crush)', 'event-stadium.json', 'venue-stadium.json', 'registrations-stadium.csv'],
+    ['procession (small)', 'event-procession.json', 'venue-procession.json', 'registrations-procession-small.csv'],
+    ['procession (large, real crush)', 'event-procession.json', 'venue-procession.json', 'registrations-procession.csv'],
+  ])('%s', async (_label, eventFile, venueFile, csvFile) => {
+    const { event, venue, groups, unroutedTotal, keptPeople } = await loadScenarioInputs(eventFile, venueFile, csvFile);
     const scenario = toEngineScenario(event, venue, groups);
-    const cohortTotal = scenario.cohorts.reduce((s, c) => s + c.size, 0);
-
     const waits = probeWaits(scenario);
     const result = simulate(scenario, [], { waits });
-    const finalFrame = result.frames[result.frames.length - 1];
 
-    const venueZoneIdx = scenario.zones.findIndex((z) => z.type === 'venue');
-    const arrived = finalFrame.zoneOcc[venueZoneIdx] ?? 0;
-    const stillInTransit =
-      scenario.links.reduce((s, _l, i) => s + (finalFrame.linkOcc[i] ?? 0), 0) +
-      scenario.zones.reduce((s, z, i) => s + (z.type !== 'venue' ? (finalFrame.zoneOcc[i] ?? 0) : 0), 0);
-
-    const unaccountedFor = cohortTotal - arrived - stillInTransit;
-    expect(Math.abs(unaccountedFor)).toBeLessThan(cohortTotal * 0.02); // within rounding, not "missing"
-
-    // gate/link capacity comfortably exceeds this sample's demand everywhere, so nobody should be
-    // stuck queuing at showStart either
-    expect(result.maxGateWait).toBeLessThan(5); // minutes
+    const accounting = computePeopleAccounting(scenario, result, unroutedTotal);
+    expect(accounting.entered + accounting.missed + accounting.stillInTransit + accounting.unrouted).toBe(keptPeople);
+    expect(accounting.totalRegistered).toBe(keptPeople);
   });
 });
 
