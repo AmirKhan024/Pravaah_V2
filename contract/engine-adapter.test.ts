@@ -77,6 +77,18 @@ describe('toEngineScenario', () => {
     expect(railCohorts.some((c) => c.pulse)).toBe(true);
   });
 
+  it('connects a coach-served hotel to the car entrance\'s gate, sized from distance + coachCapacity', async () => {
+    const { event, venue, groups } = await loadScenarioInputs('event-stadium.json', 'venue-stadium.json', 'registrations-stadium-small.csv');
+    const scenario = toEngineScenario(event, venue, groups);
+    const coachHotel = event.hotels.find((h) => h.coachOption);
+    expect(coachHotel).toBeTruthy();
+    const hotelLink = scenario.links.find((l) => l.from === coachHotel!.id);
+    expect(hotelLink).toBeTruthy();
+    expect(hotelLink!.mode).toBe('road');
+    expect(hotelLink!.ff).toBeGreaterThan(0);
+    expect(scenario.zones.some((z) => z.id === hotelLink!.to && z.type === 'gate')).toBe(true);
+  });
+
   it('marks every zone/link built from an unobserved Trusted<number> as estimated', async () => {
     const { event, venue, groups } = await loadScenarioInputs('event-stadium.json', 'venue-stadium.json', 'registrations-stadium-small.csv');
     const scenario = toEngineScenario(event, venue, groups);
