@@ -1,36 +1,9 @@
 import { FLOW_BOARD_MAX_NODES, FLOW_BOARD_STATUS_THRESHOLDS as T } from '../../../config/server-extras';
+import type { FlowBoard, FlowFrame, FlowLink, FlowNode, FlowNodeKind, StatusLevel } from '../../../contract/schemas';
 import { JAM } from '../../../engine/constants';
 import type { Frame, Link, Scenario, SimResult, Zone, ZoneType } from '../../../engine/types';
-import type { StatusLevel } from '../../organiser/types';
 
-export type FlowNodeKind = 'origin' | 'transport' | 'gate' | 'hotel' | 'food' | 'venue';
-
-export interface FlowNode {
-  id: string;
-  label: string;
-  kind: FlowNodeKind;
-  /** the matching lib/organiser/types.ts ServiceStatus.id this node belongs to, or null if none */
-  service: string | null;
-}
-
-export interface FlowLink {
-  id: string;
-  from: string;
-  to: string;
-}
-
-export interface FlowFrame {
-  /** minutes since gates-open — same axis as ZoneFrame.minuteOffset */
-  minute: number;
-  nodes: Record<string, { load: number; status: StatusLevel }>;
-  links: Record<string, { load: number; status: StatusLevel }>;
-}
-
-export interface FlowBoard {
-  nodes: FlowNode[];
-  links: FlowLink[];
-  frames: FlowFrame[];
-}
+export type { FlowBoard, FlowFrame, FlowLink, FlowNode, FlowNodeKind, StatusLevel } from '../../../contract/schemas';
 
 const FRAME_STEP_MIN = 5;
 const ORIGIN_OVERFLOW_ID = 'origin_overflow';

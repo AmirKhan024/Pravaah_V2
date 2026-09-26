@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { toEngineScenario } from '../../../contract/engine-adapter';
-import { EventSchema, VenueSchema } from '../../../contract/schemas';
+import { EventSchema, FlowBoardSchema, VenueSchema } from '../../../contract/schemas';
 import type { Scenario } from '../../../engine/types';
 import { probeWaits, simulate } from '../../../engine/simulate';
 import { buildGroups } from '../registrations/buildGroups';
@@ -139,6 +139,15 @@ describe('buildFlowBoard', () => {
     const base = simulate(scenario, [], { waits });
     const board = buildFlowBoard(scenario, base);
     expect(board.frames.map((f) => f.minute)).toEqual([0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115]);
+  });
+
+  it('a board built from a real seeded scenario passes FlowBoardSchema', async () => {
+    const scenario = await buildSampleScenario('event-stadium.json', 'venue-stadium.json', 'registrations-stadium-small.csv');
+    const waits = probeWaits(scenario);
+    const base = simulate(scenario, [], { waits });
+    const board = buildFlowBoard(scenario, base);
+    const parsed = FlowBoardSchema.safeParse(board);
+    expect(parsed.success).toBe(true);
   });
 
   it('caps at 25 nodes by folding overflow transport points into one node', () => {

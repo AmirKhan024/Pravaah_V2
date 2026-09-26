@@ -1,16 +1,30 @@
 import { NextResponse } from 'next/server';
 import { toEngineScenario } from '../../../../../contract/engine-adapter';
-import { CrowdGroupSchema, EventSchema, VenueSchema } from '../../../../../contract/schemas';
+import { CrowdGroupSchema, EventSchema, FlowBoardSchema, VenueSchema, type FlowBoard } from '../../../../../contract/schemas';
 import { runAblation } from '../../../../../engine/ablation';
 import { computeDecisionBoard } from '../../../../../engine/decisionWindow';
 import { runEnsemble } from '../../../../../engine/ensemble';
 import type { Lever } from '../../../../../engine/interventions';
+import type { Scenario, SimResult } from '../../../../../engine/types';
 import { optimiseProfile } from '../../../../../engine/optimise';
 import { probeWaits, simulate } from '../../../../../engine/simulate';
 import { buildConsoleState, type ActionState } from '../../../../../lib/server/console/buildConsoleState';
 import { buildFlowBoard } from '../../../../../lib/server/console/buildFlowBoard';
 import { publishPlan } from '../../../../../lib/server/publish/publish';
 import { getServiceRoleClient } from '../../../../../lib/server/supabase/client';
+
+/** Builds the board and validates it against FlowBoardSchema before it ever reaches a client —
+ * an invalid board is a bug in buildFlowBoard.ts, not something the UI should have to guard
+ * against, so it's logged and left out rather than shipped. */
+function buildValidatedFlowBoard(eventId: string, scenario: Scenario, base: SimResult): FlowBoard | undefined {
+  const board = buildFlowBoard(scenario, base);
+  const parsed = FlowBoardSchema.safeParse(board);
+  if (!parsed.success) {
+    console.error(`flowBoard failed validation for event "${eventId}":`, parsed.error);
+    return undefined;
+  }
+  return parsed.data;
+}
 
 const ENSEMBLE_RUNS = 30;
 
@@ -61,8 +75,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const { data: publishedPlan } = await supabase.from('plans').select('id').eq('event_id', eventId).eq('status', 'published').maybeSingle();
 
     const state = await buildConsoleState({ ...built, actionStates, published: !!publishedPlan });
-    const flowBoard = buildFlowBoard(built.scenario, built.base);
-    return NextResponse.json({ ...state, flowBoard });
+    const flowBoard = buildValidatedFlowBoard(eventId, built.scenario, built.base);
+    return NextResponse.json(flowBoard ? { ...state, flowBoard } : state);
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'could not build console state' }, { status: 500 });
   }
@@ -98,8 +112,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const actionStates = await loadActionStates(supabase, eventId);
       const { data: publishedPlan } = await supabase.from('plans').select('id').eq('event_id', eventId).eq('status', 'published').maybeSingle();
       const consoleState = await buildConsoleState({ ...built, actionStates, published: !!publishedPlan });
-      const flowBoard = buildFlowBoard(built.scenario, built.base);
-      return NextResponse.json({ ...consoleState, flowBoard });
+      const flowBoard = buildValidatedFlowBoard(eventId, built.scenario, built.base);
+      return NextResponse.json(flowBoard ? { ...consoleState, flowBoard } : consoleState);
     }
 
     if (b.action === 'publish') {

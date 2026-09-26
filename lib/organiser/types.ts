@@ -1,7 +1,6 @@
-import type { Lang, OrderStatus } from '../../contract/schemas';
+import type { FlowBoard, FlowFrame, FlowLink, FlowNode, FlowNodeKind, Lang, OrderStatus, StatusLevel } from '../../contract/schemas';
 
-/** Calm/Watch/Act-now — the only three states any part of the console can be in. */
-export type StatusLevel = 'calm' | 'watch' | 'act_now';
+export type { FlowBoard, FlowFrame, FlowLink, FlowNode, FlowNodeKind, StatusLevel };
 
 /** A number shown on screen. Every one is tagged so the UI can mark it "sample"/"assumption". */
 export type DisplayNumber = {
@@ -57,6 +56,9 @@ export type ConsoleState = {
   /** true once "Publish plan" has been pressed for this event */
   published: boolean;
   sample: boolean;
+  /** the crowd-flow graph (lib/server/console/buildFlowBoard.ts) — absent if the built board
+   * failed FlowBoardSchema validation server-side (see app/api/events/[id]/console/route.ts) */
+  flowBoard?: FlowBoard;
 };
 
 /** One colored cell in the zone board (screen 3's grid stand-in for a real map). */

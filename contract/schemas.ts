@@ -379,3 +379,45 @@ export const UploadResultSchema = z.object({
   saveStatus: SaveStatusSchema,
 });
 export type UploadResult = z.infer<typeof UploadResultSchema>;
+
+// ---------------------------------------------------------------------------------------------
+// FlowBoard — the organiser console's crowd-flow graph (lib/server/console/buildFlowBoard.ts
+// builds it; lib/organiser/types.ts and every organiser component import this same type — no
+// second definition anywhere).
+// ---------------------------------------------------------------------------------------------
+
+/** Calm/Watch/Act-now — the only three states any part of the console can be in. */
+export const StatusLevelSchema = z.enum(['calm', 'watch', 'act_now']);
+export type StatusLevel = z.infer<typeof StatusLevelSchema>;
+
+export const FlowNodeKindSchema = z.enum(['origin', 'transport', 'gate', 'hotel', 'food', 'venue']);
+export type FlowNodeKind = z.infer<typeof FlowNodeKindSchema>;
+
+export const FlowNodeSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  kind: FlowNodeKindSchema,
+  /** the matching lib/organiser/types.ts ServiceStatus.id this node belongs to, or null if none */
+  service: z.string().nullable(),
+});
+export type FlowNode = z.infer<typeof FlowNodeSchema>;
+
+export const FlowLinkSchema = z.object({ id: z.string(), from: z.string(), to: z.string() });
+export type FlowLink = z.infer<typeof FlowLinkSchema>;
+
+const FlowLoadStatusSchema = z.object({ load: z.number(), status: StatusLevelSchema });
+
+export const FlowFrameSchema = z.object({
+  /** minutes since gates-open — same axis as ZoneFrame.minuteOffset */
+  minute: z.number(),
+  nodes: z.record(z.string(), FlowLoadStatusSchema),
+  links: z.record(z.string(), FlowLoadStatusSchema),
+});
+export type FlowFrame = z.infer<typeof FlowFrameSchema>;
+
+export const FlowBoardSchema = z.object({
+  nodes: z.array(FlowNodeSchema),
+  links: z.array(FlowLinkSchema),
+  frames: z.array(FlowFrameSchema),
+});
+export type FlowBoard = z.infer<typeof FlowBoardSchema>;
