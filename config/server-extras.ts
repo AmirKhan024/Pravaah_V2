@@ -43,38 +43,23 @@ export const LIVE_SUMMARY_WINDOW_MIN = 60;
 /** assumption: abort a Telegram order send after this long so a slow/hanging network call never blocks the request */
 export const ORDER_TELEGRAM_TIMEOUT_MS = 8000;
 
+/** assumption: generic lead time before a visitor's derived arrival tick, until real hotel/venue
+ * travel-time modeling exists (see lib/server/visitorPlan/derive.ts) */
+export const VISITOR_LEAVE_BUFFER_MIN = 30;
+
 /**
  * Visitor-plan text templates, one row per field, 4 words or fewer each (placeholders count as one
- * word). These are the fallback used whenever the LLM's translation is rejected (see
- * lib/server/visitorPlan/wording.ts) — every digit/time is substituted in afterward, never seen by
- * the LLM. Marathi/Hindi rows are simple, common event phrasing — a native speaker should review
- * before this goes in front of real visitors (assumption).
+ * word). Only VisitorPlan's two freeform string fields (`gate`, `food.window` — every other field
+ * is a strict enum/HH:MM per contract/schemas.ts) ever carry translated wording. These are the
+ * fallback whenever the LLM's translation is rejected (see lib/server/visitorPlan/wording.ts) —
+ * every digit/time is substituted in afterward, never seen by the LLM. Marathi/Hindi rows are
+ * simple, common event phrasing — a native speaker should review before this goes in front of real
+ * visitors (assumption).
  */
 export const VISITOR_PLAN_TEMPLATES = {
-  en: {
-    gate: 'Use {GATE}',
-    travel: '{MODE} at {TIME}',
-    leaveTime: 'Leave by {TIME}',
-    food: '{ZONE} by {TIME}',
-    noHotel: 'No hotel booked',
-    noFood: 'No food zone yet',
-  },
-  hi: {
-    gate: '{GATE} का उपयोग करें',
-    travel: '{TIME} बजे {MODE}',
-    leaveTime: '{TIME} तक निकलें',
-    food: '{TIME} तक {ZONE}',
-    noHotel: 'कोई होटल नहीं',
-    noFood: 'कोई फूड ज़ोन नहीं',
-  },
-  mr: {
-    gate: '{GATE} वापरा',
-    travel: '{TIME} वाजता {MODE}',
-    leaveTime: '{TIME} पर्यंत निघा',
-    food: '{TIME} पर्यंत {ZONE}',
-    noHotel: 'हॉटेल नाही',
-    noFood: 'फूड झोन नाही',
-  },
+  en: { gate: 'Use {GATE}', foodWindow: 'From {TIME}' },
+  hi: { gate: '{GATE} का उपयोग करें', foodWindow: '{TIME} से' },
+  mr: { gate: '{GATE} वापरा', foodWindow: '{TIME} पासून' },
 } as const;
 
 export type VisitorPlanTemplateField = keyof (typeof VISITOR_PLAN_TEMPLATES)['en'];
