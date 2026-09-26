@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { toEngineScenario } from '../../../../../contract/engine-adapter';
 import { CrowdGroupSchema, EventSchema, VenueSchema } from '../../../../../contract/schemas';
+import { ablationSummary, extendedAblation } from '../../../../../lib/server/console/extendedAblation';
 import { computePeopleAccounting } from '../../../../../lib/server/console/peopleAccounting';
 import { minutesToClock } from '../../../../../lib/server/scenario/arrivalRules';
 import { getServiceRoleClient } from '../../../../../lib/server/supabase/client';
@@ -62,6 +63,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const clock = (tick: number) => minutesToClock(scenario.t0Min + tick);
   const firstDangerousTick = base.crushSeries.findIndex((v) => v > 0);
   const accounting = computePeopleAccounting(scenario, base, unroutedPeople);
+  const fullAblation = extendedAblation(scenario, base, waits, ablation);
 
   // expectedCountsPerGate: total simulated throughput at each gate's concourse link, summed
   // across every frame's flow — the baseline lib/server/live/gateScanDrift.ts compares a live
@@ -92,7 +94,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       crushMinutes: plan.result.crushMin,
       missed: plan.result.missed,
     },
-    ablation: ablation.map((a) => ({ name: a.name, detail: a.detail, removed: a.removed, left: a.left })),
+    ablation: fullAblation.map((a) => ({ name: a.name, detail: a.detail, removed: a.removed, left: a.left })),
+    ablationSummary: ablationSummary(fullAblation, base.crushMin),
     expectedCountsPerGate,
   };
 
