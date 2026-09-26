@@ -5,7 +5,7 @@ const root = import.meta.dirname;
 
 export default defineConfig({
   test: {
-    include: ['engine/**/*.test.ts', 'contract/**/*.test.ts'],
+    include: ['engine/**/*.test.ts', 'contract/**/*.test.ts', 'lib/**/*.test.ts', 'app/**/*.test.ts'],
     testTimeout: 120_000,
   },
   resolve: {
