@@ -22,4 +22,17 @@ export const ARRIVAL_ASSUMPTIONS = {
   defaultNudgeAcceptance: 0.4,
   /** assumption: visitor language until per-registration language data exists */
   defaultLang: 'en' as const,
+  /** assumption: a routed group below this many people is folded into an "Other <mode> to <gate>"
+   * group instead of staying its own line — see lib/server/registrations/buildGroups.ts. Tuned
+   * for the ~20k-row stadium sample: since arrival mean/std/path come only from the matched
+   * transport option (never from origin), every origin sharing a mode is numerically identical,
+   * so a low threshold barely reduces the group count — this needs to be large enough to catch
+   * most per-origin/per-hotel splits to hit "~20 groups or fewer" at that scale. */
+  minGroupSize: 700,
+  /** assumption: width (minutes) of the arrival-time bucket used to key "Other" groups, so a
+   * mode+gate merge never blends arrivals that are actually far apart in time */
+  mergeWindowMin: 30,
+  /** assumption: how far outside [gatesOpen, showStart] a group's mean may fall before it's
+   * flagged for review as outside the show window — see deriveArrival's `withinShowWindow` */
+  showWindowToleranceMin: 30,
 } as const;

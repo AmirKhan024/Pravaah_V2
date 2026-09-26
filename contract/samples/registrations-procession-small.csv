@@ -1,0 +1,201 @@
+name,mobile,area,transport,group size,notes
+Ganesh More 1,9976907632,Byculla,Bus,5,
+Nitin Kadam 2,9197137260,Dadar,bus,2,
+Sunita Pawar 3,9547901431,Lalbaug,Bus,6,children in group
+,9174941546,,train,3,elderly in group
+Rekha Shinde 5,9330647924,Girgaon,,2,
+Rekha Shinde 6,9547872642,Chowpatty,train,6,
+Prakash Gaikwad 7,9967506324,,Bus,6,
+Prakash Gaikwad 8,9429994133,Chowpatty,bus,,
+,9618896069,Chowpatty,Train,6,children in group
+Sunita Pawar 10,9506931663,Girgaon,Train,7,children in group
+Prakash Gaikwad 11,9955388620,Girgaon,Walk,2,
+Sunita Pawar 12,9438964120,,,1,
+Sunita Pawar 13,9498995549,Dadar,Walk,7,
+Prakash Gaikwad 14,9527258844,Lalbaug,Walk,7,elderly in group
+Ajay Bhosale 15,9476964705,Parel,Bus,3,elderly in group
+Prakash Gaikwad 16,9841004825,Parel,,6,
+Prakash Gaikwad 17,9383818225,Lalbaug,Walk,3,
+Vaishali Chavan 18,9828781609,Girgaon,Train,4,
+Rekha Shinde 19,9594191516,Grant Road,train,4,children in group
+Vaishali Chavan 20,9101753207,Byculla,,5,
+Vaishali Chavan 21,9795792894,Charni Road,,2,
+Vaishali Chavan 22,9589304193,Grant Road,train,,
+Nitin Kadam 23,9271953466,Lalbaug,Bus,2,
+,9182049372,Charni Road,Walk,,carrying idol
+Rekha Shinde 25,,Byculla,Walk,6,
+,9033440169,Charni Road,walk,2,
+Rekha Shinde 27,9069750844,,,2,elderly in group
+Nitin Kadam 28,9773568808,Grant Road,walk,3,
+Sunita Pawar 29,9598213138,Parel,Train,5,elderly in group
+Ganesh More 30,9540225688,Chowpatty,bus,6,
+Vaishali Chavan 31,9762645349,Girgaon,Train,8,
+Meena Salvi 32,9042762495,Grant Road,train,6,children in group
+Ajay Bhosale 33,9695143847,Lalbaug,train,4,
+Prakash Gaikwad 34,9527032509,Byculla,walk,7,
+Rekha Shinde 35,9150207603,Charni Road,,6,
+Sunita Pawar 36,9700535330,Dadar,bus,1,
+Ganesh More 37,9004222706,Byculla,walk,7,
+Nitin Kadam 38,9738535798,Byculla,train,2,
+Ganesh More 39,9934409128,Byculla,,2,
+Sunita Pawar 40,,Lalbaug,bus,1,
+Prakash Gaikwad 41,9985807135,Dadar,Walk,8,
+Ajay Bhosale 42,9340718124,Lalbaug,walk,4,
+Ganesh More 43,,Lalbaug,Train,6,
+Prakash Gaikwad 44,9910424802,Charni Road,bus,7,
+Meena Salvi 45,9733255725,Grant Road,walk,5,carrying idol
+Vaishali Chavan 46,9405512362,Grant Road,bus,8,
+Prakash Gaikwad 47,9544406797,Chowpatty,,2,carrying idol
+Ajay Bhosale 48,9345851413,Girgaon,Bus,1,
+Prakash Gaikwad 49,9803466926,,Train,2,
+Ganesh More 50,9688400065,Chowpatty,Bus,1,
+Vaishali Chavan 51,,Parel,,7,elderly in group
+Nitin Kadam 52,9052985268,Grant Road,bus,6,children in group
+Rekha Shinde 53,,Charni Road,bus,5,
+Ajay Bhosale 54,9827240929,Grant Road,bus,1,
+Ajay Bhosale 55,9259922537,Charni Road,train,7,
+Nitin Kadam 56,9829948185,Girgaon,,,
+Sunita Pawar 57,9707547544,Charni Road,Train,5,
+Nitin Kadam 58,,Parel,,2,
+Prakash Gaikwad 59,9442981920,Charni Road,,4,
+Prakash Gaikwad 60,9767107402,Lalbaug,,4,
+Vaishali Chavan 61,9784685625,Chowpatty,Walk,7,carrying idol
+Sunita Pawar 62,9209955630,,Bus,5,
+Rekha Shinde 63,9275034711,Byculla,Bus,2,elderly in group
+Meena Salvi 64,9867949923,Dadar,walk,8,
+Ganesh More 65,9887343988,Dadar,Bus,3,
+Prakash Gaikwad 66,9370527785,Lalbaug,walk,5,
+Ganesh More 67,9526695171,Byculla,bus,4,
+Ganesh More 68,9592539528,Dadar,Walk,2,carrying idol
+Sunita Pawar 69,9379679776,Parel,bus,6,
+Sunita Pawar 70,,,walk,5,
+Ajay Bhosale 71,,Girgaon,Walk,7,
+Meena Salvi 72,9740140740,Lalbaug,,3,
+Meena Salvi 73,9485438417,Dadar,,,
+Prakash Gaikwad 74,9773073639,Chowpatty,Walk,4,elderly in group
+Prakash Gaikwad 75,9953742581,Dadar,,4,
+Prakash Gaikwad 76,9547953546,Girgaon,walk,3,
+Ajay Bhosale 77,9693914351,Byculla,Train,7,
+Ajay Bhosale 78,9892607207,Charni Road,train,6,
+Nitin Kadam 79,9169823135,Girgaon,bus,7,
+Meena Salvi 80,9888186008,Dadar,train,8,
+Nitin Kadam 81,,Dadar,Bus,2,
+Sunita Pawar 82,9528066407,Lalbaug,,5,children in group
+Nitin Kadam 83,9020700957,Chowpatty,,8,
+Ganesh More 84,9751614518,Byculla,Bus,6,
+Meena Salvi 85,9980798745,Lalbaug,,,
+Sunita Pawar 86,9407601933,Parel,,5,carrying idol
+Ganesh More 87,9181713260,Lalbaug,bus,3,
+Ganesh More 88,9773595982,Dadar,,2,
+Prakash Gaikwad 89,9208063839,Grant Road,Walk,5,
+Nitin Kadam 90,9430800900,Girgaon,walk,,
+Ajay Bhosale 91,9791299627,Dadar,Bus,8,
+Meena Salvi 92,9319885478,Byculla,Walk,5,children in group
+Vaishali Chavan 93,9748022344,Girgaon,walk,6,
+Sunita Pawar 94,9717813080,Chowpatty,,2,
+Prakash Gaikwad 95,9116045553,Byculla,Train,2,
+Ganesh More 96,9420470165,Charni Road,Bus,4,
+Prakash Gaikwad 97,9709838759,Chowpatty,train,4,
+Ajay Bhosale 98,,Lalbaug,Walk,2,
+Nitin Kadam 99,9442137498,Girgaon,Bus,7,
+,9257994996,Parel,Walk,2,
+Rekha Shinde 101,9535453991,Chowpatty,walk,6,
+Ganesh More 102,,Byculla,train,7,
+Sunita Pawar 103,9547408600,Charni Road,train,3,
+Meena Salvi 104,,Byculla,bus,4,
+Ajay Bhosale 105,9216376143,Dadar,,4,
+Prakash Gaikwad 106,9112982349,Charni Road,Bus,2,
+Rekha Shinde 107,,Chowpatty,Walk,3,
+Vaishali Chavan 108,9052922930,Grant Road,,,
+Ajay Bhosale 109,9145560730,Grant Road,train,4,carrying idol
+Nitin Kadam 110,9756977098,Lalbaug,Walk,1,
+Prakash Gaikwad 111,9547318826,Dadar,walk,3,
+,9881486557,Lalbaug,Walk,8,
+Rekha Shinde 113,9410833977,Byculla,bus,5,
+Prakash Gaikwad 114,9779405745,Lalbaug,,5,
+,,Girgaon,,,
+Ajay Bhosale 116,9536357675,,,1,
+Prakash Gaikwad 117,9915578109,Byculla,bus,,
+Prakash Gaikwad 118,9046962274,Lalbaug,Walk,3,
+Prakash Gaikwad 119,9274941236,Parel,Bus,1,
+Prakash Gaikwad 120,9722059431,Chowpatty,Train,8,
+Ganesh More 121,9295719030,Girgaon,,3,carrying idol
+Vaishali Chavan 122,9649127616,Chowpatty,Bus,4,
+Prakash Gaikwad 123,9424938615,Chowpatty,Train,6,
+Sunita Pawar 124,9808856929,Chowpatty,Walk,7,elderly in group
+Sunita Pawar 125,9867217588,Dadar,train,4,
+Ajay Bhosale 126,9536249872,Girgaon,Bus,6,
+Meena Salvi 127,,Grant Road,Bus,1,
+Nitin Kadam 128,9295526902,Dadar,,6,
+Ajay Bhosale 129,9264454671,Chowpatty,walk,7,elderly in group
+Rekha Shinde 130,,Dadar,Bus,,elderly in group
+Rekha Shinde 131,9201000673,,Walk,,
+Nitin Kadam 132,9843539831,Lalbaug,,1,
+Vaishali Chavan 133,9698799334,Girgaon,train,1,
+Ganesh More 134,9508367852,,walk,4,
+Rekha Shinde 135,,Dadar,Train,1,
+Prakash Gaikwad 136,,Lalbaug,,5,
+Nitin Kadam 137,9285603222,Girgaon,Bus,1,
+Meena Salvi 138,,,train,3,children in group
+Rekha Shinde 139,,Parel,,7,children in group
+,9976869729,Lalbaug,,4,carrying idol
+Nitin Kadam 141,,Charni Road,Walk,1,carrying idol
+,9780745447,Charni Road,Train,4,
+Prakash Gaikwad 143,9983533940,Dadar,Bus,,
+Meena Salvi 144,,Chowpatty,,5,
+Nitin Kadam 145,9617732032,Grant Road,walk,7,carrying idol
+Vaishali Chavan 146,9558288181,Byculla,Bus,1,
+Meena Salvi 147,,Lalbaug,Train,8,carrying idol
+Ajay Bhosale 148,9274156887,Byculla,bus,,
+Sunita Pawar 149,9270008585,Lalbaug,Bus,,
+Ajay Bhosale 150,9979186505,Dadar,bus,,
+Meena Salvi 151,9131292124,Chowpatty,Walk,2,children in group
+Sunita Pawar 152,,Charni Road,,5,
+Ganesh More 153,9383285739,Lalbaug,bus,6,
+Ganesh More 154,9166836027,Parel,walk,5,
+Rekha Shinde 155,,Lalbaug,train,,
+Nitin Kadam 156,9001839652,Chowpatty,walk,1,
+Ajay Bhosale 157,9371343599,Lalbaug,,3,
+Ganesh More 158,9451951270,Grant Road,,7,
+Ganesh More 159,9142748729,Dadar,Walk,8,
+Prakash Gaikwad 160,9504932218,Byculla,Bus,2,
+Ganesh More 161,9220922130,Girgaon,Walk,1,
+Ajay Bhosale 162,,Byculla,walk,4,children in group
+Ajay Bhosale 163,,Parel,,4,
+Sunita Pawar 164,9237127889,Dadar,Train,8,
+Sunita Pawar 165,,,Train,1,
+Rekha Shinde 166,9358217781,Parel,Bus,3,
+Sunita Pawar 167,9013578077,Parel,walk,8,
+Rekha Shinde 168,9972710110,Parel,Walk,3,elderly in group
+Vaishali Chavan 169,9005453156,Parel,bus,4,
+Ganesh More 170,9979743433,Grant Road,walk,8,
+Nitin Kadam 171,9099738626,Byculla,walk,7,
+Sunita Pawar 172,9539133284,Girgaon,Train,2,
+Ajay Bhosale 173,9273413928,Girgaon,train,7,
+Ajay Bhosale 174,9068970118,Charni Road,train,3,
+Meena Salvi 175,9976389242,Chowpatty,,4,
+Ganesh More 176,9486242563,Dadar,bus,7,
+Sunita Pawar 177,9382608632,Parel,,2,children in group
+Rekha Shinde 178,,Girgaon,Walk,,carrying idol
+Nitin Kadam 179,9959887145,Chowpatty,train,6,
+Nitin Kadam 180,9758033764,Lalbaug,,1,
+Rekha Shinde 181,9806949335,Chowpatty,train,4,
+Ganesh More 182,,Charni Road,walk,,
+Sunita Pawar 183,9114275088,Lalbaug,Walk,1,
+Ajay Bhosale 184,9334915207,Byculla,,8,
+Vaishali Chavan 185,,,,4,
+Sunita Pawar 186,9470659248,Girgaon,Walk,,
+Vaishali Chavan 187,9325431142,Lalbaug,,2,
+Prakash Gaikwad 188,9696148677,Chowpatty,,2,
+Nitin Kadam 189,9131792903,Chowpatty,bus,7,
+Ajay Bhosale 190,,Lalbaug,train,7,
+Prakash Gaikwad 191,9009170936,Grant Road,,5,
+Nitin Kadam 192,9424552567,Girgaon,,6,
+Meena Salvi 193,9529859083,Byculla,walk,1,
+Rekha Shinde 194,9543431485,,walk,4,
+Vaishali Chavan 195,9647842503,Lalbaug,train,7,
+Meena Salvi 196,9034784102,Dadar,bus,,
+Vaishali Chavan 197,,Dadar,Walk,1,
+Sunita Pawar 198,9686019082,Lalbaug,bus,6,
+Rekha Shinde 199,,Chowpatty,train,,
+Nitin Kadam 200,9656332006,Lalbaug,,6,

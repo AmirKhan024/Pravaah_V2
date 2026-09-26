@@ -23,6 +23,15 @@
       "mode": "bus",
       "transportPointId": "tp_bus_girgaon",
       "timetable": [{ "arrivalTime": "15:00", "pulseSize": { "value": 1200, "trust": "claimed" } }]
+    },
+    {
+      "id": "opt_walk_lalbaug",
+      "mode": "walk",
+      "transportPointId": "tp_walkin_lalbaug",
+      "timetable": [
+        { "arrivalTime": "14:30", "pulseSize": { "value": 8000, "trust": "claimed" } },
+        { "arrivalTime": "15:30", "pulseSize": { "value": 10000, "trust": "claimed" } }
+      ]
     }
   ]
 }

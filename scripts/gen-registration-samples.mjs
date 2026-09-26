@@ -59,6 +59,8 @@ function genProcession() {
   return rows.join('\n') + '\n';
 }
 
-writeFileSync(new URL('../contract/samples/registrations-stadium.csv', import.meta.url), genStadium());
-writeFileSync(new URL('../contract/samples/registrations-procession.csv', import.meta.url), genProcession());
-console.log('wrote registrations-stadium.csv and registrations-procession.csv');
+// Superseded by scripts/generate-samples.ts for the large fixtures — this one makes the small,
+// fast-test 200-row *-small.csv fixtures that contract/contract.test.ts asserts an exact count on.
+writeFileSync(new URL('../contract/samples/registrations-stadium-small.csv', import.meta.url), genStadium());
+writeFileSync(new URL('../contract/samples/registrations-procession-small.csv', import.meta.url), genProcession());
+console.log('wrote registrations-stadium-small.csv and registrations-procession-small.csv');

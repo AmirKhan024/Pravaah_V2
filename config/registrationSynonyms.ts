@@ -22,11 +22,14 @@ export const TRAVEL_MODE_VALUE_SYNONYMS: Array<{ pattern: string; standard: 'tra
   { pattern: 'metro', standard: 'metro' },
   { pattern: 'train', standard: 'train' },
   { pattern: 'rail', standard: 'train' },
+  { pattern: 'local', standard: 'train' }, // Mumbai usage: "local" means the suburban local train
   { pattern: 'bus', standard: 'bus' },
+  { pattern: 'best', standard: 'bus' }, // BEST is Mumbai's public bus operator
   { pattern: 'cab', standard: 'car' },
   { pattern: 'taxi', standard: 'car' },
   { pattern: 'car', standard: 'car' },
   { pattern: 'drive', standard: 'car' },
   { pattern: 'self', standard: 'car' },
   { pattern: 'walk', standard: 'walk' },
+  { pattern: 'foot', standard: 'walk' }, // catches "on foot"
 ];

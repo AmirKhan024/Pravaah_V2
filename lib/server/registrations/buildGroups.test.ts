@@ -1,8 +1,15 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ARRIVAL_ASSUMPTIONS } from '../../../config/arrivalAssumptions';
 import { EventSchema, type Registration, VenueSchema } from '../../../contract/schemas';
+import { callJson } from '../llm/groq';
+import { mapColumns } from './mapColumns';
+import { normalizeRegistrations } from './normalize';
 import { buildGroups } from './buildGroups';
+
+vi.mock('../llm/groq', () => ({ callJson: vi.fn() }));
+const mockedCallJson = vi.mocked(callJson);
 
 const samplesDir = path.join(import.meta.dirname, '../../../contract/samples');
 const readJSON = (name: string) => JSON.parse(readFileSync(path.join(samplesDir, name), 'utf8'));
@@ -20,44 +27,46 @@ describe('buildGroups — stadium event', () => {
   const venue = VenueSchema.parse(readJSON('venue-stadium.json'));
   const event = EventSchema.parse(readJSON('event-stadium.json'));
 
+  const big = ARRIVAL_ASSUMPTIONS.minGroupSize + 10;
   const registrations: Registration[] = [
-    reg('r1', event.id, { originArea: 'Kharghar', travelMode: 'metro', groupSize: 3 }),
-    reg('r2', event.id, { originArea: 'Kharghar', travelMode: 'metro', groupSize: 2 }),
-    reg('r3', event.id, { originArea: 'Panvel', travelMode: 'train', groupSize: 4 }),
-    reg('r4', event.id, { originArea: 'Thane', travelMode: 'car', groupSize: 5 }), // no 'car' transport option -> unrouted
-    reg('r5', event.id, { originArea: 'Pune', travelMode: 'other', groupSize: 1 }), // 'other' has no option either -> unrouted
+    reg('r1', event.id, { originArea: 'Kharghar', travelMode: 'metro', groupSize: big }), // stays its own group (>= minGroupSize)
+    reg('r2', event.id, { originArea: 'Pune', travelMode: 'metro', groupSize: 3 }), // small -> merged
+    reg('r3', event.id, { originArea: 'Panvel', travelMode: 'train', groupSize: 4 }), // small -> merged
+    reg('r4', event.id, { originArea: 'Thane', travelMode: 'car', groupSize: 5 }), // now routable via tp_parking_north
+    reg('r5', event.id, { originArea: 'Pune', travelMode: 'other', groupSize: 1 }), // no option for 'other' -> unrouted
   ];
-
   const totalPeople = registrations.reduce((s, r) => s + r.normalized.groupSize, 0);
 
-  it('produces groups for the routable registrations', () => {
+  it('produces groups for the routable registrations, none with an empty path', () => {
     const { groups } = buildGroups(registrations, event, venue);
     expect(groups.length).toBeGreaterThan(0);
-  });
-
-  it('never produces a group with an empty path', () => {
-    const { groups } = buildGroups(registrations, event, venue);
     for (const g of groups) expect(g.path.length).toBeGreaterThan(0);
   });
 
-  it('groups the two Kharghar metro rows together (same origin+mode+hotel+gate)', () => {
+  it('keeps a group at/above minGroupSize under its own label', () => {
     const { groups } = buildGroups(registrations, event, venue);
-    const metroGroup = groups.find((g) => g.label.includes('Kharghar'));
-    expect(metroGroup?.size).toBe(5); // 3 + 2
+    expect(groups.some((g) => g.label.includes('Kharghar') && g.size === big)).toBe(true);
   });
 
-  it('puts unroutable modes (no matching transport option) into `unrouted`, never guesses a group for them', () => {
-    const { groups, unrouted } = buildGroups(registrations, event, venue);
-    expect(unrouted.some((u) => u.reason.includes('car'))).toBe(true);
-    expect(unrouted.some((u) => u.reason.includes('other'))).toBe(true);
-    expect(groups.some((g) => g.label.toLowerCase().includes('car'))).toBe(false);
+  it('merges below-minGroupSize routable groups into an "Other <mode> to <gate>" group', () => {
+    const { groups } = buildGroups(registrations, event, venue);
+    expect(groups.some((g) => g.label.startsWith('Other metro to'))).toBe(true);
   });
 
-  it('sum of kept group sizes plus unrouted sizes equals total registered people', () => {
-    const { groups, unrouted } = buildGroups(registrations, event, venue);
-    const groupTotal = groups.reduce((s, g) => s + g.size, 0);
-    const unroutedTotal = unrouted.reduce((s, u) => s + u.size, 0);
-    expect(groupTotal + unroutedTotal).toBe(totalPeople);
+  it('routes car registrations via the parking transport point (no longer unrouted)', () => {
+    const { unroutedByMode } = buildGroups(registrations, event, venue);
+    expect(unroutedByMode.some((u) => u.mode === 'car')).toBe(false);
+  });
+
+  it('puts genuinely unroutable modes into unroutedByMode with a per-mode reason, never guesses', () => {
+    const { groups, unroutedByMode } = buildGroups(registrations, event, venue);
+    expect(unroutedByMode.some((u) => u.mode === 'other' && u.reason.includes('other'))).toBe(true);
+    expect(groups.some((g) => g.label.toLowerCase().includes('other arrivals'))).toBe(false);
+  });
+
+  it('preserves total people exactly across the merge (groups + unrouted == total registered)', () => {
+    const { groups, unroutedTotal } = buildGroups(registrations, event, venue);
+    expect(groups.reduce((s, g) => s + g.size, 0) + unroutedTotal).toBe(totalPeople);
   });
 
   it('is pure and deterministic', () => {
@@ -74,7 +83,7 @@ describe('buildGroups — procession event (same code, different venue/event)', 
   const registrations: Registration[] = [
     reg('p1', event.id, { originArea: 'Lalbaug', travelMode: 'train', groupSize: 6 }),
     reg('p2', event.id, { originArea: 'Girgaon', travelMode: 'bus', groupSize: 3 }),
-    reg('p3', event.id, { originArea: 'Dadar', travelMode: 'walk', groupSize: 2 }), // no 'walk' option -> unrouted
+    reg('p3', event.id, { originArea: 'Dadar', travelMode: 'walk', groupSize: 200 }), // now routable via the walk-in point
   ];
 
   it('works with zero code changes: produces groups and never an empty path', () => {
@@ -83,9 +92,65 @@ describe('buildGroups — procession event (same code, different venue/event)', 
     for (const g of groups) expect(g.path.length).toBeGreaterThan(0);
   });
 
+  it('routes walk registrations via the new walk-in transport point', () => {
+    const { unroutedByMode } = buildGroups(registrations, event, venue);
+    expect(unroutedByMode.some((u) => u.mode === 'walk')).toBe(false);
+  });
+
   it('accounts for every registered person between groups and unrouted', () => {
-    const { groups, unrouted } = buildGroups(registrations, event, venue);
+    const { groups, unroutedTotal } = buildGroups(registrations, event, venue);
     const total = registrations.reduce((s, r) => s + r.normalized.groupSize, 0);
-    expect(groups.reduce((s, g) => s + g.size, 0) + unrouted.reduce((s, u) => s + u.size, 0)).toBe(total);
+    expect(groups.reduce((s, g) => s + g.size, 0) + unroutedTotal).toBe(total);
+  });
+});
+
+function loadCsvRows(fileName: string): { header: string[]; rows: Array<Record<string, string>> } {
+  const lines = readFileSync(path.join(samplesDir, fileName), 'utf8').trim().split('\n');
+  const header = lines[0].split(',');
+  const rows = lines.slice(1).map((line) => {
+    const cells = line.split(',');
+    return Object.fromEntries(header.map((h, i) => [h, cells[i] ?? '']));
+  });
+  return { header, rows };
+}
+
+describe('buildGroups at scale', () => {
+  beforeEach(() => {
+    mockedCallJson.mockImplementation(async (_prompt, _schema, fallback) => fallback);
+  });
+
+  it('the ~20k-row stadium sample: merges the long tail to <=20 groups, unrouted stays under 5%, zero people lost', async () => {
+    const venue = VenueSchema.parse(readJSON('venue-stadium.json'));
+    const event = EventSchema.parse(readJSON('event-stadium.json'));
+    const { header, rows } = loadCsvRows('registrations-stadium.csv');
+
+    const mapping = await mapColumns(header, rows.slice(0, 5));
+    const { registrations } = await normalizeRegistrations(rows, mapping, event);
+    const { groups, unroutedTotal } = buildGroups(registrations, event, venue);
+
+    const keptPeople = registrations.reduce((s, r) => s + r.normalized.groupSize, 0);
+    const groupPeople = groups.reduce((s, g) => s + g.size, 0);
+
+    expect(groupPeople + unroutedTotal).toBe(keptPeople);
+    expect(unroutedTotal / keptPeople).toBeLessThan(0.05);
+    expect(groups.length).toBeLessThanOrEqual(20);
+    for (const g of groups) expect(g.path.length).toBeGreaterThan(0);
+  });
+
+  it('the ~10k-row procession sample: unrouted stays under 5%, zero people lost', async () => {
+    const venue = VenueSchema.parse(readJSON('venue-procession.json'));
+    const event = EventSchema.parse(readJSON('event-procession.json'));
+    const { header, rows } = loadCsvRows('registrations-procession.csv');
+
+    const mapping = await mapColumns(header, rows.slice(0, 5));
+    const { registrations } = await normalizeRegistrations(rows, mapping, event);
+    const { groups, unroutedTotal } = buildGroups(registrations, event, venue);
+
+    const keptPeople = registrations.reduce((s, r) => s + r.normalized.groupSize, 0);
+    const groupPeople = groups.reduce((s, g) => s + g.size, 0);
+
+    expect(groupPeople + unroutedTotal).toBe(keptPeople);
+    expect(unroutedTotal / keptPeople).toBeLessThan(0.05);
+    for (const g of groups) expect(g.path.length).toBeGreaterThan(0);
   });
 });

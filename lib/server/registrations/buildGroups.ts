@@ -1,26 +1,38 @@
 import { ARRIVAL_ASSUMPTIONS } from '../../../config/arrivalAssumptions';
-import type { CrowdGroup, Event, Registration, Venue } from '../../../contract/schemas';
+import type { CrowdGroup, Event, Registration, TravelMode, Venue } from '../../../contract/schemas';
 import { deriveArrival, derivePath, findMatchingTransportOption } from '../scenario/arrivalRules';
 
-export interface UnroutedBucket {
-  key: string;
-  registrationIds: string[];
+export interface UnroutedByMode {
+  mode: TravelMode;
   size: number;
   reason: string;
 }
 
 export interface BuildGroupsResult {
   groups: CrowdGroup[];
-  unrouted: UnroutedBucket[];
+  unroutedTotal: number;
+  unroutedByMode: UnroutedByMode[];
 }
 
 interface Bucket {
   key: string;
   originArea: string;
-  travelMode: Registration['normalized']['travelMode'];
+  travelMode: TravelMode;
   hotelId: string | null;
   gateHint: string | null;
   registrations: Registration[];
+}
+
+/** A routed bucket, before the small-group merge pass. */
+interface Candidate {
+  size: number;
+  mean: number;
+  std: number;
+  travelMode: TravelMode;
+  gateId: string;
+  path: string[];
+  alt?: string[];
+  label: string;
 }
 
 const slug = (s: string) =>
@@ -53,11 +65,31 @@ function labelForMode(mode: string): string {
   }
 }
 
+function toCrowdGroup(id: string, c: Pick<Candidate, 'size' | 'mean' | 'std' | 'path' | 'alt' | 'label'>): CrowdGroup {
+  const A = ARRIVAL_ASSUMPTIONS;
+  return {
+    id,
+    label: c.label,
+    size: c.size,
+    mean: c.mean,
+    std: c.std,
+    ps: A.defaultNudgeAcceptance,
+    lang: A.defaultLang,
+    path: c.path,
+    ...(c.alt ? { alt: c.alt } : {}),
+  };
+}
+
 /**
  * Pure and deterministic — no LLM, no network, no randomness. Same (registrations, event, venue)
- * always produces the same CrowdGroup[]. Groups by origin area + mode + hotel + gate hint; mean/
- * std/path come from lib/server/scenario/arrivalRules.ts, the same functions Step 2's
+ * always produces the same result. Groups by origin area + mode + hotel + gate hint; mean/std/
+ * path come from lib/server/scenario/arrivalRules.ts, the same functions Step 2's
  * toEngineScenario() will call — never a number invented here.
+ *
+ * After the initial grouping, any group below config's minGroupSize is folded into an
+ * "Other <mode> to <gate>" group, keyed by (mode, gate, arrival window) so a merge never blends
+ * arrivals that are actually far apart in time. Total people is preserved exactly — merging only
+ * changes how many lines the result has, never who's counted.
  */
 export function buildGroups(registrations: Registration[], event: Event, venue: Venue): BuildGroupsResult {
   const buckets = new Map<string, Bucket>();
@@ -71,40 +103,85 @@ export function buildGroups(registrations: Registration[], event: Event, venue: 
     b.registrations.push(r);
   }
 
-  const groups: CrowdGroup[] = [];
-  const unrouted: UnroutedBucket[] = [];
+  const candidates: Candidate[] = [];
+  const unroutedByModeMap = new Map<string, UnroutedByMode>(); // key: mode + '||' + reason
+
+  const addUnrouted = (mode: TravelMode, size: number, reason: string) => {
+    const key = `${mode}||${reason}`;
+    const existing = unroutedByModeMap.get(key);
+    if (existing) existing.size += size;
+    else unroutedByModeMap.set(key, { mode, size, reason });
+  };
 
   for (const b of buckets.values()) {
     const size = b.registrations.reduce((sum, r) => sum + r.normalized.groupSize, 0);
-    const registrationIds = b.registrations.map((r) => r.id);
 
     const option = findMatchingTransportOption(b.travelMode, event);
     if (!option) {
-      unrouted.push({ key: b.key, registrationIds, size, reason: `no transport option for travel mode "${b.travelMode}"` });
+      addUnrouted(b.travelMode, size, `no transport option for travel mode "${b.travelMode}"`);
       continue;
     }
-
     const path = derivePath({ option, venue, gateHint: b.gateHint });
     if (!path) {
-      unrouted.push({ key: b.key, registrationIds, size, reason: `transport point "${option.transportPointId}" is not linked to any venue entrance` });
+      addUnrouted(b.travelMode, size, `transport point "${option.transportPointId}" is not linked to any venue entrance`);
       continue;
     }
-
     const { mean, std } = deriveArrival({ option, venue, event });
     const hotelName = b.hotelId ? (event.hotels.find((h) => h.id === b.hotelId)?.name ?? b.hotelId) : null;
 
-    groups.push({
-      id: 'grp_' + slug(b.key),
-      label: `${labelForMode(b.travelMode)} from ${b.originArea}${hotelName ? ' (' + hotelName + ')' : ''}`,
+    candidates.push({
       size,
       mean,
       std,
-      ps: ARRIVAL_ASSUMPTIONS.defaultNudgeAcceptance,
-      lang: ARRIVAL_ASSUMPTIONS.defaultLang,
+      travelMode: b.travelMode,
+      gateId: path.gateId,
       path: path.path,
-      ...(path.alt ? { alt: path.alt } : {}),
+      alt: path.alt,
+      label: `${labelForMode(b.travelMode)} from ${b.originArea}${hotelName ? ' (' + hotelName + ')' : ''}`,
     });
   }
 
-  return { groups, unrouted };
+  const A = ARRIVAL_ASSUMPTIONS;
+  const big = candidates.filter((c) => c.size >= A.minGroupSize);
+  const small = candidates.filter((c) => c.size < A.minGroupSize);
+
+  const merged = new Map<string, { travelMode: TravelMode; gateId: string; members: Candidate[] }>();
+  for (const c of small) {
+    const windowIndex = Math.floor(c.mean / A.mergeWindowMin);
+    const key = `${c.travelMode}||${c.gateId}||${windowIndex}`;
+    let m = merged.get(key);
+    if (!m) {
+      m = { travelMode: c.travelMode, gateId: c.gateId, members: [] };
+      merged.set(key, m);
+    }
+    m.members.push(c);
+  }
+
+  const gateName = (gateId: string) => venue.gates.find((g) => g.id === gateId)?.name ?? gateId;
+
+  const groups: CrowdGroup[] = [
+    ...big.map((c, i) => toCrowdGroup(`grp_${i}_${slug(c.label)}`, c)),
+    ...[...merged.values()].map((cluster, i) => {
+      const size = cluster.members.reduce((s, m) => s + m.size, 0);
+      const mean = cluster.members.reduce((s, m) => s + m.mean * m.size, 0) / size;
+      // pooled variance across the merged subgroups: average of each member's own variance plus
+      // its mean's own squared distance from the combined mean, weighted by size
+      const variance = cluster.members.reduce((s, m) => s + m.size * (m.std ** 2 + (m.mean - mean) ** 2), 0) / size;
+      const std = Math.max(Math.sqrt(variance), A.minStdMin);
+      // representative path: the largest contributing member's, so the "Other" group still
+      // points somewhere real rather than an arbitrary first entry
+      const representative = [...cluster.members].sort((a, b) => b.size - a.size)[0];
+      return toCrowdGroup(`grp_other_${i}_${slug(cluster.travelMode + '_' + cluster.gateId)}`, {
+        size,
+        mean,
+        std,
+        path: representative.path,
+        alt: representative.alt,
+        label: `Other ${labelForMode(cluster.travelMode).replace(' arrivals', '').toLowerCase()} to ${gateName(cluster.gateId)}`,
+      });
+    }),
+  ];
+
+  const unroutedByMode = [...unroutedByModeMap.values()];
+  return { groups, unroutedTotal: unroutedByMode.reduce((s, u) => s + u.size, 0), unroutedByMode };
 }

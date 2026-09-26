@@ -348,3 +348,27 @@ export const LedgerEntrySchema = z.object({
   hash: z.string().length(64),
 });
 export type LedgerEntry = z.infer<typeof LedgerEntrySchema>;
+
+// ---------------------------------------------------------------------------------------------
+// UploadResult — the shape of POST /api/registrations/upload's response (Step 1)
+// ---------------------------------------------------------------------------------------------
+
+export const SaveStatusSchema = z.discriminatedUnion('ok', [z.object({ ok: z.literal(true) }), z.object({ ok: z.literal(false), error: z.string() })]);
+export type SaveStatus = z.infer<typeof SaveStatusSchema>;
+
+export const DroppedReasonSchema = z.object({ reason: z.string(), count: z.number().int().nonnegative() });
+export const UnroutedByModeSchema = z.object({ mode: TravelModeSchema, size: z.number().int().nonnegative(), reason: z.string() });
+
+export const UploadResultSchema = z.object({
+  totalRows: z.number().int().nonnegative(),
+  keptRows: z.number().int().nonnegative(),
+  keptPeople: z.number().int().nonnegative(),
+  dropped: z.number().int().nonnegative(),
+  droppedReasons: z.array(DroppedReasonSchema),
+  groups: z.array(CrowdGroupSchema),
+  unroutedTotal: z.number().int().nonnegative(),
+  unroutedByMode: z.array(UnroutedByModeSchema),
+  assumedMappings: z.array(z.string()),
+  saveStatus: SaveStatusSchema,
+});
+export type UploadResult = z.infer<typeof UploadResultSchema>;

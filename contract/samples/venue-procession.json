@@ -18,10 +18,11 @@
     { "id": "tp_lalbaug_station", "name": "Lalbaug Station", "type": "train_station", "lat": 18.98, "lng": 72.833 },
     { "id": "tp_charni_road", "name": "Charni Road Station", "type": "train_station", "lat": 18.952, "lng": 72.819 },
     { "id": "tp_bus_girgaon", "name": "Girgaon Bus Stop", "type": "bus_stop", "lat": 18.954, "lng": 72.817 },
-    { "id": "tp_dropoff_chowpatty", "name": "Chowpatty Drop-off", "type": "drop_off", "lat": 18.953, "lng": 72.8155 }
+    { "id": "tp_dropoff_chowpatty", "name": "Chowpatty Drop-off", "type": "drop_off", "lat": 18.953, "lng": 72.8155 },
+    { "id": "tp_walkin_lalbaug", "name": "Local walk-in gathering point (near Lalbaug)", "type": "drop_off", "lat": 18.981, "lng": 72.832 }
   ],
   "entrances": [
-    { "id": "entrance_lalbaug", "name": "Lalbaug Entry", "transportPointIds": ["tp_lalbaug_station"], "gateIds": ["checkpoint_1"] },
+    { "id": "entrance_lalbaug", "name": "Lalbaug Entry", "transportPointIds": ["tp_lalbaug_station", "tp_walkin_lalbaug"], "gateIds": ["checkpoint_1"] },
     { "id": "entrance_chowpatty", "name": "Chowpatty Entry", "transportPointIds": ["tp_charni_road", "tp_bus_girgaon", "tp_dropoff_chowpatty"], "gateIds": ["checkpoint_2"] }
   ]
 }

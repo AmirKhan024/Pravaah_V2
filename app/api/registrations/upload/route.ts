@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { EventSchema, VenueSchema } from '../../../../contract/schemas';
+import { EventSchema, UploadResultSchema, VenueSchema } from '../../../../contract/schemas';
 import type { ColumnMapping } from '../../../../lib/server/registrations/mapColumns';
 import { mapColumns } from '../../../../lib/server/registrations/mapColumns';
 import { normalizeRegistrations } from '../../../../lib/server/registrations/normalize';
@@ -25,12 +25,12 @@ function assumedMappingsSummary(mapping: ColumnMapping, valueMappings: { travelM
 }
 
 /**
- * CSV/Excel registrations -> CrowdGroup[]. Runs mapColumns -> normalizeRegistrations ->
- * buildGroups, then tries to save via the service-role key. supabase/schema.sql hasn't been run
- * against a live project yet, so a save failure is expected and non-fatal: the groups are still
- * returned, with `saved: false` and a `saveError` explaining why.
+ * CSV registrations -> CrowdGroup[]. Runs mapColumns -> normalizeRegistrations -> buildGroups,
+ * then tries to save via the service-role key. supabase/schema.sql hasn't been run against a live
+ * project yet, so a save failure is expected and non-fatal: the groups are still returned, with
+ * saveStatus.ok = false and an error message.
  *
- * multipart/form-data fields: `file` (.csv/.xlsx/.xls), `event` (Event JSON), `venue` (Venue JSON).
+ * multipart/form-data fields: `file` (.csv), `event` (Event JSON), `venue` (Venue JSON).
  */
 export async function POST(request: Request) {
   let form: FormData;
@@ -70,10 +70,9 @@ export async function POST(request: Request) {
 
   const mapping = await mapColumns(headers, rows.slice(0, 5));
   const { registrations, dropped, valueMappings } = await normalizeRegistrations(rows, mapping, event);
-  const { groups, unrouted } = buildGroups(registrations, event, venue);
+  const { groups, unroutedTotal, unroutedByMode } = buildGroups(registrations, event, venue);
 
-  let saved = true;
-  let saveError: string | undefined;
+  let saveStatus: { ok: true } | { ok: false; error: string } = { ok: true };
   try {
     const supabase = getServiceRoleClient();
     const { error: regError } = await supabase.from('registrations').upsert(registrations.map((r) => ({ id: r.id, event_id: r.eventId, data: r })));
@@ -81,25 +80,23 @@ export async function POST(request: Request) {
     const { error: groupError } = await supabase.from('crowd_groups').upsert(groups.map((g) => ({ id: g.id, event_id: event.id, data: g })));
     if (groupError) throw groupError;
   } catch (err) {
-    saved = false;
-    saveError = err instanceof Error ? err.message : 'unknown error saving to Supabase';
-    console.error('[registrations/upload] save failed:', saveError);
+    const error = err instanceof Error ? err.message : 'unknown error saving to Supabase';
+    saveStatus = { ok: false, error };
+    console.error('[registrations/upload] save failed:', error);
   }
 
-  // "rows" count registrations; "people" sums each row's groupSize. groups[].size and
-  // unrouted[].size are people, not rows, so keptPeople is what should balance against them —
-  // groups total + unroutedTotal === keptPeople always holds.
-  return NextResponse.json({
+  const result = UploadResultSchema.parse({
     totalRows: rows.length,
     keptRows: registrations.length,
     keptPeople: registrations.reduce((s, r) => s + r.normalized.groupSize, 0),
-    droppedRows: dropped.length,
+    dropped: dropped.length,
     droppedReasons: countReasons(dropped.map((d) => d.reason)),
-    unrouted: unrouted.map((u) => ({ reason: u.reason, size: u.size, registrationCount: u.registrationIds.length })),
-    unroutedTotal: unrouted.reduce((s, u) => s + u.size, 0),
     groups,
+    unroutedTotal,
+    unroutedByMode,
     assumedMappings: assumedMappingsSummary(mapping, valueMappings),
-    saved,
-    ...(saveError ? { saveError } : {}),
+    saveStatus,
   });
+
+  return NextResponse.json(result);
 }

@@ -52,6 +52,16 @@
       "mode": "bus",
       "transportPointId": "tp_bus_stand",
       "timetable": [{ "arrivalTime": "17:15", "pulseSize": { "value": 900, "trust": "claimed" } }]
+    },
+    {
+      "id": "opt_car",
+      "mode": "car",
+      "transportPointId": "tp_parking_north",
+      "timetable": [
+        { "arrivalTime": "17:20", "pulseSize": { "value": 1500, "trust": "claimed" } },
+        { "arrivalTime": "17:50", "pulseSize": { "value": 2000, "trust": "claimed" } },
+        { "arrivalTime": "18:20", "pulseSize": { "value": 1800, "trust": "claimed" } }
+      ]
     }
   ]
 }

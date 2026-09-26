@@ -37,10 +37,10 @@ describe('POST /api/registrations/upload', () => {
   });
 
   it('processes the messy stadium CSV end to end and produces groups even with the LLM unavailable', async () => {
-    const csv = readText('registrations-stadium.csv');
+    const csv = readText('registrations-stadium-small.csv');
     const event = readJSONText('event-stadium.json');
     const venue = readJSONText('venue-stadium.json');
-    const res = await POST(buildRequest('registrations-stadium.csv', csv, event, venue));
+    const res = await POST(buildRequest('registrations-stadium-small.csv', csv, event, venue));
     expect(res.status).toBe(200);
     const body = await res.json();
 
@@ -49,16 +49,15 @@ describe('POST /api/registrations/upload', () => {
     expect(body.groups.length).toBeGreaterThan(0);
     expect(body.groups.every((g: { path: string[] }) => g.path.length > 0)).toBe(true);
     const groupTotal = body.groups.reduce((s: number, g: { size: number }) => s + g.size, 0);
-    const unroutedTotal = body.unroutedTotal as number;
-    expect(groupTotal + unroutedTotal).toBe(body.keptPeople);
-    expect(body.saved).toBe(true);
+    expect(groupTotal + body.unroutedTotal).toBe(body.keptPeople);
+    expect(body.saveStatus.ok).toBe(true);
   });
 
   it('processes the messy procession CSV end to end with zero code changes', async () => {
-    const csv = readText('registrations-procession.csv');
+    const csv = readText('registrations-procession-small.csv');
     const event = readJSONText('event-procession.json');
     const venue = readJSONText('venue-procession.json');
-    const res = await POST(buildRequest('registrations-procession.csv', csv, event, venue));
+    const res = await POST(buildRequest('registrations-procession-small.csv', csv, event, venue));
     expect(res.status).toBe(200);
     const body = await res.json();
 
@@ -72,32 +71,41 @@ describe('POST /api/registrations/upload', () => {
     mockedGetClient.mockImplementation(() => {
       throw new Error('SUPABASE_URL / SUPABASE_SECRET_KEY not set');
     });
-    const csv = readText('registrations-stadium.csv');
+    const csv = readText('registrations-stadium-small.csv');
     const event = readJSONText('event-stadium.json');
     const venue = readJSONText('venue-stadium.json');
-    const res = await POST(buildRequest('registrations-stadium.csv', csv, event, venue));
+    const res = await POST(buildRequest('registrations-stadium-small.csv', csv, event, venue));
     const body = await res.json();
 
     expect(res.status).toBe(200);
     expect(body.groups.length).toBeGreaterThan(0);
-    expect(body.saved).toBe(false);
-    expect(body.saveError).toBeTruthy();
+    expect(body.saveStatus.ok).toBe(false);
+    expect(body.saveStatus.error).toBeTruthy();
   });
 
   it('includes an "assumed mappings" review list the head can read (e.g. header -> field, value -> value)', async () => {
-    const csv = readText('registrations-stadium.csv');
+    const csv = readText('registrations-stadium-small.csv');
     const event = readJSONText('event-stadium.json');
     const venue = readJSONText('venue-stadium.json');
-    const res = await POST(buildRequest('registrations-stadium.csv', csv, event, venue));
+    const res = await POST(buildRequest('registrations-stadium-small.csv', csv, event, venue));
     const body = await res.json();
     expect(Array.isArray(body.assumedMappings)).toBe(true);
     expect(body.assumedMappings.some((m: string) => m.includes('->'))).toBe(true);
   });
 
   it('rejects a request with an invalid event', async () => {
-    const csv = readText('registrations-stadium.csv');
+    const csv = readText('registrations-stadium-small.csv');
     const venue = readJSONText('venue-stadium.json');
-    const res = await POST(buildRequest('registrations-stadium.csv', csv, JSON.stringify({ not: 'an event' }), venue));
+    const res = await POST(buildRequest('registrations-stadium-small.csv', csv, JSON.stringify({ not: 'an event' }), venue));
     expect(res.status).toBe(400);
+  });
+
+  it('gives a clear "Save as CSV" error for an Excel upload', async () => {
+    const event = readJSONText('event-stadium.json');
+    const venue = readJSONText('venue-stadium.json');
+    const res = await POST(buildRequest('registrations.xlsx', 'irrelevant', event, venue));
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toContain('Save as CSV');
   });
 });

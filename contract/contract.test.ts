@@ -61,8 +61,8 @@ describe('contract samples validate against their schemas', () => {
     expect(() => LedgerEntrySchema.parse(readJSON('ledger-entry.json'))).not.toThrow();
   });
 
-  describe('registrations-stadium.csv', () => {
-    const { header, rows } = parseCSV(readFileSync(path.join(samplesDir, 'registrations-stadium.csv'), 'utf8'));
+  describe('registrations-stadium-small.csv (the fast, exact-count fixture)', () => {
+    const { header, rows } = parseCSV(readFileSync(path.join(samplesDir, 'registrations-stadium-small.csv'), 'utf8'));
 
     it('has the expected messy header and ~200 rows', () => {
       expect(header).toEqual(['Full Name', 'Phone', 'Origin City', 'Mode of Travel', 'Hotel Name', 'Group Size', 'Gate Pref', 'Notes']);
@@ -81,8 +81,8 @@ describe('contract samples validate against their schemas', () => {
     });
   });
 
-  describe('registrations-procession.csv', () => {
-    const { header, rows } = parseCSV(readFileSync(path.join(samplesDir, 'registrations-procession.csv'), 'utf8'));
+  describe('registrations-procession-small.csv (the fast, exact-count fixture)', () => {
+    const { header, rows } = parseCSV(readFileSync(path.join(samplesDir, 'registrations-procession-small.csv'), 'utf8'));
 
     it('has its own, differently-shaped messy header and ~200 rows', () => {
       expect(header).toEqual(['name', 'mobile', 'area', 'transport', 'group size', 'notes']);
@@ -98,6 +98,34 @@ describe('contract samples validate against their schemas', () => {
         const raw = Object.fromEntries(header.map((h, i) => [h, row[i] ?? '']));
         expect(() => RegistrationSchema.shape.raw.parse(raw)).not.toThrow();
       }
+    });
+  });
+
+  describe('registrations-stadium.csv (the large, ~20k-row fixture)', () => {
+    const { header, rows } = parseCSV(readFileSync(path.join(samplesDir, 'registrations-stadium.csv'), 'utf8'));
+
+    it('is generated at the requested scale', () => {
+      expect(header).toEqual(['Full Name', 'Phone', 'Origin City', 'Mode of Travel', 'Hotel Name', 'Group Size', 'Gate Pref', 'Notes']);
+      expect(rows.length).toBeGreaterThanOrEqual(19000);
+      expect(rows.length).toBeLessThanOrEqual(21000);
+    });
+
+    it('has at least one blank cell somewhere (messy on purpose)', () => {
+      expect(rows.some((r) => r.some((cell) => cell === ''))).toBe(true);
+    });
+  });
+
+  describe('registrations-procession.csv (the large, ~10k-row fixture)', () => {
+    const { header, rows } = parseCSV(readFileSync(path.join(samplesDir, 'registrations-procession.csv'), 'utf8'));
+
+    it('is generated at the requested scale', () => {
+      expect(header).toEqual(['name', 'mobile', 'area', 'transport', 'group size', 'notes']);
+      expect(rows.length).toBeGreaterThanOrEqual(9500);
+      expect(rows.length).toBeLessThanOrEqual(10500);
+    });
+
+    it('has at least one blank cell somewhere (messy on purpose)', () => {
+      expect(rows.some((r) => r.some((cell) => cell === ''))).toBe(true);
     });
   });
 });

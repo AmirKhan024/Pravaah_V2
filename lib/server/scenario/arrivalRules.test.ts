@@ -18,7 +18,10 @@ describe('findMatchingTransportOption', () => {
 
   it('returns undefined for a mode the event has no timetable for', () => {
     expect(findMatchingTransportOption('walk', event)).toBeUndefined();
-    expect(findMatchingTransportOption('car', event)).toBeUndefined();
+  });
+
+  it('finds the car option (parking-routed) added for build item 4', () => {
+    expect(findMatchingTransportOption('car', event)?.id).toBe('opt_car');
   });
 });
 
@@ -76,5 +79,22 @@ describe('deriveArrival', () => {
     const a = deriveArrival({ option: metroOption, venue, event });
     const b = deriveArrival({ option: metroOption, venue, event });
     expect(a).toEqual(b);
+  });
+
+  it('flags withinShowWindow=false rather than silently correcting an out-of-window arrival', () => {
+    const lateOption = {
+      id: 'opt_test_late',
+      mode: 'bus' as const,
+      transportPointId: 'tp_bus_stand',
+      timetable: [{ arrivalTime: '23:00', pulseSize: { value: 100, trust: 'observed' as const } }],
+    };
+    const { withinShowWindow } = deriveArrival({ option: lateOption, venue, event });
+    expect(withinShowWindow).toBe(false);
+  });
+
+  it('flags an on-time arrival as within the show window', () => {
+    const busOption = findMatchingTransportOption('bus', event)!;
+    const { withinShowWindow } = deriveArrival({ option: busOption, venue, event });
+    expect(withinShowWindow).toBe(true);
   });
 });

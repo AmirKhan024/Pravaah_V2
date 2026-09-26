@@ -15,6 +15,12 @@
  * Tick convention: mean is in minutes relative to event.gatesOpen (tick 0 = gatesOpen). Step 2's
  * toEngineScenario may pick an earlier Scenario.t0Min and shift every mean by a constant offset —
  * that shift is Step 2's responsibility, not this file's.
+ *
+ * Anchored to show start: deriveArrival also reports `withinShowWindow` — whether the derived
+ * arrival falls inside [gatesOpen, showStart] plus config's showWindowToleranceMin. This is a
+ * flag, not a clamp: forcibly pulling every mean toward showStart would overwrite real timetable
+ * signal with an invented number (e.g. a late-running mode SHOULD show as late — that's exactly
+ * the kind of crowd problem the system exists to surface, not hide).
  */
 import { ARRIVAL_ASSUMPTIONS } from '../../../config/arrivalAssumptions';
 import { discountedCapacity } from '../../../config/trust';
@@ -23,6 +29,15 @@ import type { Event, EventTransportOption, TravelMode, Venue } from '../../../co
 export function parseHHMM(time: string): number {
   const [h, m] = time.split(':').map(Number);
   return h * 60 + m;
+}
+
+/** Inverse of parseHHMM, for reporting a tick/minute value as a clock time (e.g. 1125 -> "18:45"). */
+export function minutesToClock(minutesAfterMidnight: number): string {
+  const total = Math.round(minutesAfterMidnight) % (24 * 60);
+  const norm = total < 0 ? total + 24 * 60 : total;
+  const h = Math.floor(norm / 60);
+  const m = norm % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
 interface LatLng {
@@ -104,6 +119,10 @@ export interface DeriveArrivalInput {
 export interface DerivedArrival {
   mean: number;
   std: number;
+  /** false when the derived arrival (at absolute clock time) falls outside [gatesOpen, showStart]
+   * by more than config's showWindowToleranceMin — a signal to review, not something this
+   * function corrects for itself (see the file-level comment on why it doesn't clamp). */
+  withinShowWindow: boolean;
 }
 
 export function deriveArrival({ option, venue, event }: DeriveArrivalInput): DerivedArrival {
@@ -130,7 +149,12 @@ export function deriveArrival({ option, venue, event }: DeriveArrivalInput): Der
   const travelTimeMin = transportPoint ? travelTimeMinutes(haversineMeters(transportPoint, venue), A) : 0;
 
   const gatesOpenMin = parseHHMM(event.gatesOpen);
-  const mean = weightedMean + travelTimeMin - gatesOpenMin;
+  const showStartMin = parseHHMM(event.showStart);
+  const arrivalAtGateMin = weightedMean + travelTimeMin;
+  const mean = arrivalAtGateMin - gatesOpenMin;
 
-  return { mean, std };
+  const tolerance = A.showWindowToleranceMin;
+  const withinShowWindow = arrivalAtGateMin >= gatesOpenMin - tolerance && arrivalAtGateMin <= showStartMin + tolerance;
+
+  return { mean, std, withinShowWindow };
 }
