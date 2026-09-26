@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import type { VisitorPlan, Lang } from '@/contract/schemas';
+import { Suspense, useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
+import type { VisitorPlan, Lang, TravelMode } from '@/contract/schemas';
 import { getTranslations, getStoredLanguage, setStoredLanguage } from '@/lib/visitor/i18n';
 import { getVisitorPlan, subscribeToPlanUpdates } from '@/lib/visitor/api';
 import { LanguageSelector } from '@/components/visitor/LanguageSelector';
@@ -9,6 +10,19 @@ import { PlanCard } from '@/components/visitor/PlanCard';
 import { UpdateBanner } from '@/components/visitor/UpdateBanner';
 
 export default function VisitorPlanPage() {
+  return (
+    <Suspense fallback={null}>
+      <VisitorPlanPageInner />
+    </Suspense>
+  );
+}
+
+function VisitorPlanPageInner() {
+  const searchParams = useSearchParams();
+  const eventId = searchParams.get('event') ?? '';
+  const mode = (searchParams.get('mode') as TravelMode) || 'train';
+  const hotel = searchParams.get('hotel') ?? undefined;
+
   const [lang, setLang] = useState<Lang>('mr');
   const [mounted, setMounted] = useState(false);
   const [plan, setPlan] = useState<VisitorPlan | null>(null);
@@ -24,7 +38,7 @@ export default function VisitorPlanPage() {
     setLang(initialLang);
     setMounted(true);
 
-    getVisitorPlan({ originArea: '', travelMode: 'train', groupSize: 1 }).then((initialPlan) => {
+    getVisitorPlan({ eventId, originArea: '', travelMode: mode, stayingAt: hotel, groupSize: 1, lang: initialLang }).then((initialPlan) => {
       setPlan(initialPlan);
     });
 
@@ -39,7 +53,8 @@ export default function VisitorPlanPage() {
     });
 
     return () => unsubscribe();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventId, mode, hotel]);
 
   const handleLanguageChange = (newLang: Lang) => {
     setLang(newLang);

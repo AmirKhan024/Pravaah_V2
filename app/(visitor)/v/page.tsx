@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { Lang, TravelMode } from '@/contract/schemas';
 import { getTranslations, getStoredLanguage, setStoredLanguage } from '@/lib/visitor/i18n';
 import { getVisitorPlan } from '@/lib/visitor/api';
@@ -9,7 +9,17 @@ import { LanguageSelector } from '@/components/visitor/LanguageSelector';
 import { VisitorForm } from '@/components/visitor/VisitorForm';
 
 export default function VisitorEntryPage() {
+  return (
+    <Suspense fallback={null}>
+      <VisitorEntryPageInner />
+    </Suspense>
+  );
+}
+
+function VisitorEntryPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const eventId = searchParams.get('event') ?? '';
   const [lang, setLang] = useState<Lang>('mr');
   const [mounted, setMounted] = useState(false);
 
@@ -29,15 +39,16 @@ export default function VisitorEntryPage() {
     stayingAt: string;
     groupSize: number;
   }) => {
-    // Call typed API
     await getVisitorPlan({
+      eventId,
       originArea: formData.originArea,
       travelMode: formData.travelMode,
       stayingAt: formData.stayingAt,
       groupSize: formData.groupSize,
+      lang,
     });
 
-    router.push('/v/plan');
+    router.push(`/v/plan?event=${encodeURIComponent(eventId)}&mode=${formData.travelMode}${formData.stayingAt ? `&hotel=${encodeURIComponent(formData.stayingAt)}` : ''}`);
   };
 
   if (!mounted) return null;

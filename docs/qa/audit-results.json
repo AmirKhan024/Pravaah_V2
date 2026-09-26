@@ -1,0 +1,213 @@
+{
+  "results": [
+    {
+      "name": "console-stadium",
+      "url": "/console?event=event_stadium_final",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "navError": null,
+      "isBlank": false,
+      "consoleErrors": [],
+      "failedRequests": [],
+      "numberCount": 4,
+      "sampleMentions": 1,
+      "longLabels": [],
+      "longTextBlocks": [],
+      "smallTapTargets": null
+    },
+    {
+      "name": "console-procession",
+      "url": "/console?event=event_procession_visarjan",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "navError": null,
+      "isBlank": false,
+      "consoleErrors": [],
+      "failedRequests": [],
+      "numberCount": 3,
+      "sampleMentions": 1,
+      "longLabels": [],
+      "longTextBlocks": [],
+      "smallTapTargets": null
+    },
+    {
+      "name": "console-calm",
+      "url": "/console?event=event_stadium_small_meetup",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "navError": null,
+      "isBlank": false,
+      "consoleErrors": [],
+      "failedRequests": [],
+      "numberCount": 3,
+      "sampleMentions": 0,
+      "longLabels": [],
+      "longTextBlocks": [],
+      "smallTapTargets": null
+    },
+    {
+      "name": "owner-venue",
+      "url": "/owner/venue",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "navError": null,
+      "isBlank": false,
+      "consoleErrors": [],
+      "failedRequests": [],
+      "numberCount": 8,
+      "sampleMentions": 0,
+      "longLabels": [],
+      "longTextBlocks": [],
+      "smallTapTargets": null
+    },
+    {
+      "name": "owner-documents",
+      "url": "/owner/documents",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "navError": null,
+      "isBlank": false,
+      "consoleErrors": [],
+      "failedRequests": [],
+      "numberCount": 8,
+      "sampleMentions": 0,
+      "longLabels": [],
+      "longTextBlocks": [],
+      "smallTapTargets": null
+    },
+    {
+      "name": "owner-event",
+      "url": "/owner/event",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "navError": null,
+      "isBlank": false,
+      "consoleErrors": [],
+      "failedRequests": [],
+      "numberCount": 8,
+      "sampleMentions": 0,
+      "longLabels": [],
+      "longTextBlocks": [],
+      "smallTapTargets": null
+    },
+    {
+      "name": "owner-registrations",
+      "url": "/owner/registrations",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "navError": null,
+      "isBlank": false,
+      "consoleErrors": [],
+      "failedRequests": [],
+      "numberCount": 8,
+      "sampleMentions": 0,
+      "longLabels": [],
+      "longTextBlocks": [],
+      "smallTapTargets": null
+    },
+    {
+      "name": "v-entry-mobile",
+      "url": "/v?event=event_stadium_final",
+      "viewport": {
+        "width": 360,
+        "height": 780
+      },
+      "navError": null,
+      "isBlank": false,
+      "consoleErrors": [],
+      "failedRequests": [],
+      "numberCount": 1,
+      "sampleMentions": 0,
+      "longLabels": [],
+      "longTextBlocks": [],
+      "smallTapTargets": 0
+    },
+    {
+      "name": "v-plan-mobile",
+      "url": "/v/plan?event=event_stadium_final&mode=train",
+      "viewport": {
+        "width": 360,
+        "height": 780
+      },
+      "navError": null,
+      "isBlank": false,
+      "consoleErrors": [],
+      "failedRequests": [],
+      "numberCount": 4,
+      "sampleMentions": 0,
+      "longLabels": [],
+      "longTextBlocks": [],
+      "smallTapTargets": 0
+    },
+    {
+      "name": "v-entry-desktop",
+      "url": "/v?event=event_stadium_final",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "navError": null,
+      "isBlank": false,
+      "consoleErrors": [],
+      "failedRequests": [],
+      "numberCount": 1,
+      "sampleMentions": 0,
+      "longLabels": [],
+      "longTextBlocks": [],
+      "smallTapTargets": null
+    },
+    {
+      "name": "v-plan-desktop",
+      "url": "/v/plan?event=event_stadium_final&mode=train",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "navError": null,
+      "isBlank": false,
+      "consoleErrors": [],
+      "failedRequests": [],
+      "numberCount": 4,
+      "sampleMentions": 0,
+      "longLabels": [],
+      "longTextBlocks": [],
+      "smallTapTargets": null
+    }
+  ],
+  "flows": [
+    {
+      "label": "stadium",
+      "ok": true,
+      "steps": [
+        "opened a service (tile 2) with a pending action: ok",
+        "pressed Do it: ok",
+        "pressed Publish: button disabled (canPublish=false)",
+        "/v/plan shows a plan: yes"
+      ]
+    },
+    {
+      "label": "procession",
+      "ok": true,
+      "steps": [
+        "opened a service (tile 1) with a pending action: ok",
+        "pressed Do it: ok",
+        "pressed Publish: button disabled (canPublish=false)",
+        "/v/plan shows a plan: yes"
+      ]
+    }
+  ]
+}
