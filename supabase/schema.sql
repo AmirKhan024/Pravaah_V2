@@ -118,6 +118,15 @@ create table if not exists ledger_entries (
   primary key (event_id, seq)
 );
 
+-- Step 2: one row per simulate() run — the summary app/api/events/[id]/simulate/route.ts returns.
+create table if not exists simulation_results (
+  id         text primary key,
+  event_id   text not null references events(id) on delete cascade,
+  data       jsonb not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists simulation_results_event_idx on simulation_results(event_id);
+
 alter table venues          enable row level security;
 alter table venue_documents enable row level security;
 alter table events          enable row level security;
@@ -127,7 +136,8 @@ alter table plans           enable row level security;
 alter table orders          enable row level security;
 alter table visitor_plans   enable row level security;
 alter table live_reports    enable row level security;
-alter table ledger_entries  enable row level security;
+alter table ledger_entries      enable row level security;
+alter table simulation_results  enable row level security;
 
 -- plain PostgreSQL CREATE POLICY has no IF NOT EXISTS — drop-then-create is the idempotent form.
 drop policy if exists "anon can read venues" on venues;
@@ -159,3 +169,6 @@ create policy "anon can read live_reports" on live_reports for select using (tru
 
 drop policy if exists "anon can read ledger_entries" on ledger_entries;
 create policy "anon can read ledger_entries" on ledger_entries for select using (true);
+
+drop policy if exists "anon can read simulation_results" on simulation_results;
+create policy "anon can read simulation_results" on simulation_results for select using (true);
