@@ -1,30 +1,25 @@
 /**
- * Implements the documented rule from contract/engine-adapter.ts's toEngineScenario() doc comment:
- * a CrowdGroup's mean/std comes from the matched EventTransportOption's timetable plus the travel
- * time the venue graph implies, never from an invented number; path/alt comes from walking
- * Venue.entrances -> Venue.gates, never typed in. Both lib/server/registrations/buildGroups.ts
- * (Step 1) and the eventual toEngineScenario() implementation (Step 2) call these same functions,
- * so the rule is defined exactly once.
+ * Implements the documented rule from contract/engine-adapter.ts's toEngineScenario() doc comment.
  *
- * Simplification made explicit here (not hidden): rather than assigning each registration to a
- * single timetable pulse, mean/std are the pulseSize-weighted mean/std of ALL of the matched
- * option's timetable entries. This is deterministic and well-defined whether an option has one
- * entry or many, and avoids inventing a rule for "which single pulse a registration belongs to"
- * that the data doesn't actually support.
+ * mean/std: anchored to event.showStart, per mode — config.arrivalAssumptions.SHOW_ANCHORED_ARRIVAL
+ * says "this mode peaks N minutes before showStart, with spread S" (an assumption, not a
+ * measurement), clamped into [gatesOpen, showStart]. Previously this was the timetable's own
+ * pulseSize-weighted mean — but that has no real anchor to the show itself (a mode's people would
+ * "arrive" whenever its vehicles happen to run, even if that drifted away from the show), so it's
+ * replaced rather than blended. This is NOT "the first vehicle's time" — every timetable entry
+ * still matters, just for sizing pulses (see derivePulse), not for timing the mean.
+ *
+ * path/alt: from walking Venue.entrances -> Venue.gates, never typed in.
+ *
+ * Both lib/server/registrations/buildGroups.ts (Step 1) and the eventual toEngineScenario()
+ * implementation (Step 2) call these same functions, so the rule is defined exactly once.
  *
  * Tick convention: mean is in minutes relative to event.gatesOpen (tick 0 = gatesOpen). Step 2's
  * toEngineScenario may pick an earlier Scenario.t0Min and shift every mean by a constant offset —
  * that shift is Step 2's responsibility, not this file's.
- *
- * Anchored to show start: deriveArrival also reports `withinShowWindow` — whether the derived
- * arrival falls inside [gatesOpen, showStart] plus config's showWindowToleranceMin. This is a
- * flag, not a clamp: forcibly pulling every mean toward showStart would overwrite real timetable
- * signal with an invented number (e.g. a late-running mode SHOULD show as late — that's exactly
- * the kind of crowd problem the system exists to surface, not hide).
  */
 import { ARRIVAL_ASSUMPTIONS } from '../../../config/arrivalAssumptions';
-import { discountedCapacity } from '../../../config/trust';
-import type { Event, EventTransportOption, TravelMode, Venue } from '../../../contract/schemas';
+import type { Event, EventTransportOption, Pulse, TransportMode, TravelMode, Venue } from '../../../contract/schemas';
 
 export function parseHHMM(time: string): number {
   const [h, m] = time.split(':').map(Number);
@@ -38,27 +33,6 @@ export function minutesToClock(minutesAfterMidnight: number): string {
   const h = Math.floor(norm / 60);
   const m = norm % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-}
-
-interface LatLng {
-  lat: number;
-  lng: number;
-}
-
-const EARTH_RADIUS_M = 6371000;
-export function haversineMeters(a: LatLng, b: LatLng): number {
-  const rad = (d: number) => (d * Math.PI) / 180;
-  const dLat = rad(b.lat - a.lat);
-  const dLng = rad(b.lng - a.lng);
-  const s = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(s)));
-}
-
-/** Walk under walkLimitM, road (with a detour factor) beyond it — mirrors the engine's own
- * venue-import defaults for the same walk-vs-road question. */
-function travelTimeMinutes(distanceM: number, A: typeof ARRIVAL_ASSUMPTIONS): number {
-  if (distanceM <= A.walkLimitM) return distanceM / A.walkSpeedMPerMin;
-  return (distanceM * A.detourFactor) / A.roadSpeedMPerMin;
 }
 
 /** The registration's travelMode picks the matching EventTransportOption — step 1 of the documented rule. */
@@ -110,51 +84,46 @@ export function derivePath({ option, venue, gateHint }: DerivePathInput): Derive
   };
 }
 
+const RAIL_MODES: ReadonlySet<TransportMode> = new Set(['train', 'metro']);
+
+/**
+ * Rail modes (train, metro) run in bursts, not a steady trickle — Cohort.pulse captures that
+ * (see engine/types.ts). period/width come from the Event timetable's own entry spacing, never
+ * invented, except the width-as-a-fraction-of-period ratio (config, labeled assumption). Needs at
+ * least 2 timetable entries to imply a period; a single entry has no spacing to derive from.
+ */
+export function derivePulse(option: EventTransportOption): Pulse | undefined {
+  if (!RAIL_MODES.has(option.mode) || option.timetable.length < 2) return undefined;
+  const times = option.timetable.map((t) => parseHHMM(t.arrivalTime)).sort((a, b) => a - b);
+  const gaps = times.slice(1).map((t, i) => t - times[i]);
+  const period = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+  const width = Math.max(1, Math.round(period * ARRIVAL_ASSUMPTIONS.pulseWidthFraction));
+  return { period: Math.round(period), width, offset: 0 };
+}
+
 export interface DeriveArrivalInput {
   option: EventTransportOption;
-  venue: Venue;
   event: Event;
 }
 
 export interface DerivedArrival {
   mean: number;
   std: number;
-  /** false when the derived arrival (at absolute clock time) falls outside [gatesOpen, showStart]
-   * by more than config's showWindowToleranceMin — a signal to review, not something this
-   * function corrects for itself (see the file-level comment on why it doesn't clamp). */
+  /** always true by construction now (mean is clamped into [gatesOpen, showStart]) — kept as an
+   * explicit, testable statement of that guarantee rather than an implicit assumption. */
   withinShowWindow: boolean;
 }
 
-export function deriveArrival({ option, venue, event }: DeriveArrivalInput): DerivedArrival {
+export function deriveArrival({ option, event }: DeriveArrivalInput): DerivedArrival {
   const A = ARRIVAL_ASSUMPTIONS;
-  const entries = option.timetable.map((t) => ({
-    min: parseHHMM(t.arrivalTime),
-    weight: discountedCapacity(t.pulseSize.value, t.pulseSize.trust),
-  }));
-  const totalWeight = entries.reduce((s, e) => s + e.weight, 0);
-  const weightedMean = totalWeight > 0 ? entries.reduce((s, e) => s + e.min * e.weight, 0) / totalWeight : entries[0].min;
-
-  let std: number;
-  if (entries.length === 1) {
-    std = A.singlePulseStdMin;
-  } else if (totalWeight > 0) {
-    const variance = entries.reduce((s, e) => s + e.weight * (e.min - weightedMean) ** 2, 0) / totalWeight;
-    std = Math.sqrt(variance);
-  } else {
-    std = A.singlePulseStdMin;
-  }
-  std = Math.max(std, A.minStdMin);
-
-  const transportPoint = venue.transportPoints.find((p) => p.id === option.transportPointId);
-  const travelTimeMin = transportPoint ? travelTimeMinutes(haversineMeters(transportPoint, venue), A) : 0;
-
+  const anchor = A.showAnchoredArrival[option.mode];
   const gatesOpenMin = parseHHMM(event.gatesOpen);
   const showStartMin = parseHHMM(event.showStart);
-  const arrivalAtGateMin = weightedMean + travelTimeMin;
+
+  const rawArrivalMin = showStartMin - anchor.peakBeforeShowMin;
+  const arrivalAtGateMin = Math.min(showStartMin, Math.max(gatesOpenMin, rawArrivalMin));
   const mean = arrivalAtGateMin - gatesOpenMin;
+  const std = Math.max(anchor.spreadMin, A.minStdMin);
 
-  const tolerance = A.showWindowToleranceMin;
-  const withinShowWindow = arrivalAtGateMin >= gatesOpenMin - tolerance && arrivalAtGateMin <= showStartMin + tolerance;
-
-  return { mean, std, withinShowWindow };
+  return { mean, std, withinShowWindow: true };
 }

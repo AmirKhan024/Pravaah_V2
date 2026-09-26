@@ -1,6 +1,6 @@
 import { ARRIVAL_ASSUMPTIONS } from '../../../config/arrivalAssumptions';
-import type { CrowdGroup, Event, Registration, TravelMode, Venue } from '../../../contract/schemas';
-import { deriveArrival, derivePath, findMatchingTransportOption } from '../scenario/arrivalRules';
+import type { CrowdGroup, Event, Pulse, Registration, TravelMode, Venue } from '../../../contract/schemas';
+import { deriveArrival, derivePath, derivePulse, findMatchingTransportOption } from '../scenario/arrivalRules';
 
 export interface UnroutedByMode {
   mode: TravelMode;
@@ -16,7 +16,6 @@ export interface BuildGroupsResult {
 
 interface Bucket {
   key: string;
-  originArea: string;
   travelMode: TravelMode;
   hotelId: string | null;
   gateHint: string | null;
@@ -28,6 +27,7 @@ interface Candidate {
   size: number;
   mean: number;
   std: number;
+  pulse?: Pulse;
   travelMode: TravelMode;
   gateId: string;
   path: string[];
@@ -43,9 +43,18 @@ const slug = (s: string) =>
     .replace(/^_+|_+$/g, '')
     .slice(0, 40) || 'x';
 
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/**
+ * Origin is deliberately NOT part of this key. Registration.normalized.originArea is free text
+ * with no coordinates, and mean/std/path (arrivalRules.ts) never varied by origin anyway — every
+ * origin sharing a mode produced numerically identical groups under different labels. Keeping it
+ * in the key only inflated the group count without adding real distinguishing information; hotel
+ * still distinguishes (EventHotel carries a real distanceToVenueM, unlike a free-text origin).
+ */
 function bucketKey(r: Registration): string {
   const n = r.normalized;
-  return [n.originArea.trim().toLowerCase(), n.travelMode, n.hotelId ?? 'none', (n.gateHint ?? 'none').toLowerCase()].join('||');
+  return [n.travelMode, n.hotelId ?? 'none', (n.gateHint ?? 'none').toLowerCase()].join('||');
 }
 
 function labelForMode(mode: string): string {
@@ -65,7 +74,7 @@ function labelForMode(mode: string): string {
   }
 }
 
-function toCrowdGroup(id: string, c: Pick<Candidate, 'size' | 'mean' | 'std' | 'path' | 'alt' | 'label'>): CrowdGroup {
+function toCrowdGroup(id: string, c: Pick<Candidate, 'size' | 'mean' | 'std' | 'pulse' | 'path' | 'alt' | 'label'>): CrowdGroup {
   const A = ARRIVAL_ASSUMPTIONS;
   return {
     id,
@@ -76,20 +85,22 @@ function toCrowdGroup(id: string, c: Pick<Candidate, 'size' | 'mean' | 'std' | '
     ps: A.defaultNudgeAcceptance,
     lang: A.defaultLang,
     path: c.path,
+    ...(c.pulse ? { pulse: c.pulse } : {}),
     ...(c.alt ? { alt: c.alt } : {}),
   };
 }
 
 /**
  * Pure and deterministic — no LLM, no network, no randomness. Same (registrations, event, venue)
- * always produces the same result. Groups by origin area + mode + hotel + gate hint; mean/std/
- * path come from lib/server/scenario/arrivalRules.ts, the same functions Step 2's
- * toEngineScenario() will call — never a number invented here.
+ * always produces the same result. Groups by mode + hotel + gate hint (see bucketKey for why
+ * origin isn't part of this); mean/std/pulse/path come from lib/server/scenario/arrivalRules.ts,
+ * the same functions Step 2's toEngineScenario() will call — never a number invented here.
  *
- * After the initial grouping, any group below config's minGroupSize is folded into an
- * "Other <mode> to <gate>" group, keyed by (mode, gate, arrival window) so a merge never blends
- * arrivals that are actually far apart in time. Total people is preserved exactly — merging only
- * changes how many lines the result has, never who's counted.
+ * After the initial grouping, any group below config's minGroupSize is folded into a
+ * "<Mode> -> <Gate>" group, keyed by (mode, gate, arrival window) so a merge never blends arrivals
+ * that are actually far apart in time. Total people is preserved exactly — merging only changes
+ * how many lines the result has, never who's counted. Groups at/above minGroupSize keep their own
+ * descriptive name instead.
  */
 export function buildGroups(registrations: Registration[], event: Event, venue: Venue): BuildGroupsResult {
   const buckets = new Map<string, Bucket>();
@@ -97,7 +108,7 @@ export function buildGroups(registrations: Registration[], event: Event, venue: 
     const key = bucketKey(r);
     let b = buckets.get(key);
     if (!b) {
-      b = { key, originArea: r.normalized.originArea, travelMode: r.normalized.travelMode, hotelId: r.normalized.hotelId, gateHint: r.normalized.gateHint, registrations: [] };
+      b = { key, travelMode: r.normalized.travelMode, hotelId: r.normalized.hotelId, gateHint: r.normalized.gateHint, registrations: [] };
       buckets.set(key, b);
     }
     b.registrations.push(r);
@@ -126,18 +137,20 @@ export function buildGroups(registrations: Registration[], event: Event, venue: 
       addUnrouted(b.travelMode, size, `transport point "${option.transportPointId}" is not linked to any venue entrance`);
       continue;
     }
-    const { mean, std } = deriveArrival({ option, venue, event });
+    const { mean, std } = deriveArrival({ option, event });
+    const pulse = derivePulse(option);
     const hotelName = b.hotelId ? (event.hotels.find((h) => h.id === b.hotelId)?.name ?? b.hotelId) : null;
 
     candidates.push({
       size,
       mean,
       std,
+      pulse,
       travelMode: b.travelMode,
       gateId: path.gateId,
       path: path.path,
       alt: path.alt,
-      label: `${labelForMode(b.travelMode)} from ${b.originArea}${hotelName ? ' (' + hotelName + ')' : ''}`,
+      label: `${labelForMode(b.travelMode)}${hotelName ? ' (' + hotelName + ')' : ''}`,
     });
   }
 
@@ -168,16 +181,17 @@ export function buildGroups(registrations: Registration[], event: Event, venue: 
       // its mean's own squared distance from the combined mean, weighted by size
       const variance = cluster.members.reduce((s, m) => s + m.size * (m.std ** 2 + (m.mean - mean) ** 2), 0) / size;
       const std = Math.max(Math.sqrt(variance), A.minStdMin);
-      // representative path: the largest contributing member's, so the "Other" group still
-      // points somewhere real rather than an arbitrary first entry
+      // representative path/pulse: the largest contributing member's — pulse/path only vary by
+      // mode+gate anyway, which every member in a cluster shares, so this is just a stable pick
       const representative = [...cluster.members].sort((a, b) => b.size - a.size)[0];
-      return toCrowdGroup(`grp_other_${i}_${slug(cluster.travelMode + '_' + cluster.gateId)}`, {
+      return toCrowdGroup(`grp_merged_${i}_${slug(cluster.travelMode + '_' + cluster.gateId)}`, {
         size,
         mean,
         std,
+        pulse: representative.pulse,
         path: representative.path,
         alt: representative.alt,
-        label: `Other ${labelForMode(cluster.travelMode).replace(' arrivals', '').toLowerCase()} to ${gateName(cluster.gateId)}`,
+        label: `${capitalize(cluster.travelMode)} -> ${gateName(cluster.gateId)}`,
       });
     }),
   ];
