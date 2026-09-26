@@ -10,6 +10,9 @@ export type DisplayNumber = {
   unit?: string;
   /** true when this number is not real, measured data (sample fixture or an unverified assumption) */
   sample: boolean;
+  /** true when `value` is clamped below the real number (e.g. a gate wait longer than the whole
+   * evening) — the UI shows "{value}+" or similar instead of the raw figure */
+  capped?: boolean;
 };
 
 /** One suggested fix, shown as a single card in the service detail screen. */

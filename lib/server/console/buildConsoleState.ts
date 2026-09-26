@@ -57,7 +57,7 @@ function actionId(eventId: string, iv: Lever, index: number): string {
 async function buildAction(input: BuildConsoleStateInput, serviceId: string, iv: Lever, index: number, ablationRow: AblationRow | undefined): Promise<SuggestedAction> {
   const id = actionId(input.event.id, iv, index);
   const board = input.decisionBoard.find((b) => b.iv === iv);
-  const minutesLeft: DisplayNumber = board && !board.useless ? { value: Math.max(0, board.deadlineTick), unit: 'min', sample: false } : { value: CONSOLE_DEFAULT_MINUTES_LEFT, unit: 'min', sample: true };
+  const minutesLeft: DisplayNumber = board && !board.useless ? { value: Math.round(Math.max(0, board.deadlineTick)), unit: 'min', sample: false } : { value: CONSOLE_DEFAULT_MINUTES_LEFT, unit: 'min', sample: true };
 
   const costLabel = 'rupees' in iv && iv.rupees ? `Rs ${iv.rupees.toLocaleString('en-IN')}` : 'Free';
 
@@ -121,11 +121,15 @@ export async function buildConsoleState(input: BuildConsoleStateInput): Promise<
     const levers = leversByTarget.get(zone.id) ?? [];
     const actions: SuggestedAction[] = [];
     for (const iv of levers) actions.push(await buildAction(input, zone.id, iv, leverIndex++, ablationByGate.get(zone.id)));
+    // a wait longer than the whole evening is capped at the evening length for display —
+    // the raw number is still real (crushMin etc. use it uncapped), just not shown past this
+    const capped = waitMin > scenario.horizon;
+    const headline: DisplayNumber = { value: Math.round(Math.min(waitMin, scenario.horizon)), unit: 'min wait', sample: false, ...(capped ? { capped: true } : {}) };
     services.push({
       id: zone.id,
       label: zone.name,
       statusColor,
-      headline: { value: Math.round(waitMin * 10) / 10, unit: 'min wait', sample: false },
+      headline,
       problem: statusColor === 'calm' ? 'Moving well' : 'Queue building up',
       actions,
       sample: false,
@@ -159,12 +163,27 @@ export async function buildConsoleState(input: BuildConsoleStateInput): Promise<
     services.push({ id: zone.id, label: zone.name, statusColor: 'watch', headline: null, problem: 'Queue building up', actions, sample: false });
   }
 
-  // routes (cohort-targeted nudge/stagger levers — no single zone/link owns these)
+  // routes (cohort-targeted nudge/stagger levers — no single zone/link owns these). The one
+  // number this service can show is how many people those levers actually touch; with nothing
+  // to count, the whole service is left out rather than showing an empty tile.
   const routeLevers = untargeted.filter((iv) => iv.type === 'nudge' || iv.type === 'stagger');
-  if (routeLevers.length) {
+  const routeAffectedPeople = routeLevers.reduce((sum, iv) => {
+    const cohortId = 'cohort' in iv ? iv.cohort : undefined;
+    const cohort = cohortId ? scenario.cohorts.find((c) => c.id === cohortId) : undefined;
+    return sum + (cohort?.size ?? 0);
+  }, 0);
+  if (routeAffectedPeople > 0) {
     const actions: SuggestedAction[] = [];
     for (const iv of routeLevers) actions.push(await buildAction(input, 'routes', iv, leverIndex++, undefined));
-    services.push({ id: 'routes', label: 'Routes', statusColor: 'watch', headline: null, problem: 'Arrivals could spread out more', actions, sample: false });
+    services.push({
+      id: 'routes',
+      label: 'Routes',
+      statusColor: 'watch',
+      headline: { value: Math.round(routeAffectedPeople), unit: 'people', sample: false },
+      problem: 'Arrivals could spread out more',
+      actions,
+      sample: false,
+    });
   }
 
   const worst = services.reduce<StatusLevel>((acc, s) => (severity(s.statusColor) > severity(acc) ? s.statusColor : acc), 'calm');

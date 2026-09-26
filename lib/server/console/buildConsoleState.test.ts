@@ -90,4 +90,34 @@ describe('buildConsoleState', () => {
     const b = await buildConsoleState({ ...input, actionStates: {}, published: false });
     expect(a).toEqual(b);
   });
+
+  it('every DisplayNumber in the state is a whole minute/count — no decimals', async () => {
+    const input = await buildStadiumInput();
+    const state = await buildConsoleState({ ...input, actionStates: {}, published: false });
+    const numbers = [
+      state.nextDeadline,
+      ...state.services.map((s) => s.headline),
+      ...state.services.flatMap((s) => s.actions.map((a) => a.minutesLeft)),
+    ].filter((n): n is NonNullable<typeof n> => n != null);
+    expect(numbers.length).toBeGreaterThan(0);
+    for (const n of numbers) expect(Number.isInteger(n.value)).toBe(true);
+  });
+
+  it('caps a gate wait longer than the evening at the horizon, flagged capped=true', async () => {
+    const input = await buildStadiumInput();
+    const gate = input.scenario.zones.find((z) => z.type === 'gate')!;
+    const base = { ...input.base, gateWaitPeak: { ...input.base.gateWaitPeak, [gate.id]: input.scenario.horizon + 500 } };
+    const state = await buildConsoleState({ ...input, base, actionStates: {}, published: false });
+    const service = state.services.find((s) => s.id === gate.id)!;
+    expect(service.headline?.value).toBe(input.scenario.horizon);
+    expect(service.headline?.capped).toBe(true);
+  });
+
+  it('a normal gate wait is not flagged capped', async () => {
+    const input = await buildStadiumInput();
+    const state = await buildConsoleState({ ...input, actionStates: {}, published: false });
+    for (const s of state.services) {
+      if (s.headline?.unit === 'min wait') expect(s.headline.capped).toBeUndefined();
+    }
+  });
 });
