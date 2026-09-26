@@ -27,13 +27,15 @@ describe('buildGroups — stadium event', () => {
   const venue = VenueSchema.parse(readJSON('venue-stadium.json'));
   const event = EventSchema.parse(readJSON('event-stadium.json'));
 
+  // origin is no longer part of the bucket key (see buildGroups.ts's bucketKey comment), so
+  // distinctness here comes from mode/hotel/gateHint, not from originArea
   const big = ARRIVAL_ASSUMPTIONS.minGroupSize + 10;
   const registrations: Registration[] = [
-    reg('r1', event.id, { originArea: 'Kharghar', travelMode: 'metro', groupSize: big }), // stays its own group (>= minGroupSize)
-    reg('r2', event.id, { originArea: 'Pune', travelMode: 'metro', groupSize: 3 }), // small -> merged
-    reg('r3', event.id, { originArea: 'Panvel', travelMode: 'train', groupSize: 4 }), // small -> merged
-    reg('r4', event.id, { originArea: 'Thane', travelMode: 'car', groupSize: 5 }), // now routable via tp_parking_north
-    reg('r5', event.id, { originArea: 'Pune', travelMode: 'other', groupSize: 1 }), // no option for 'other' -> unrouted
+    reg('r1', event.id, { travelMode: 'metro', hotelId: null, groupSize: big }), // stays its own group (>= minGroupSize)
+    reg('r2', event.id, { travelMode: 'metro', hotelId: 'hotel_kharghar_grand', groupSize: 3 }), // distinct bucket (different hotel), small -> merged
+    reg('r3', event.id, { travelMode: 'train', groupSize: 4 }), // small -> merged
+    reg('r4', event.id, { travelMode: 'car', groupSize: 5 }), // now routable via tp_parking_north
+    reg('r5', event.id, { travelMode: 'other', groupSize: 1 }), // no option for 'other' -> unrouted
   ];
   const totalPeople = registrations.reduce((s, r) => s + r.normalized.groupSize, 0);
 
@@ -43,14 +45,16 @@ describe('buildGroups — stadium event', () => {
     for (const g of groups) expect(g.path.length).toBeGreaterThan(0);
   });
 
-  it('keeps a group at/above minGroupSize under its own label', () => {
+  it('keeps a group at/above minGroupSize under its own descriptive label (not the merged arrow format)', () => {
     const { groups } = buildGroups(registrations, event, venue);
-    expect(groups.some((g) => g.label.includes('Kharghar') && g.size === big)).toBe(true);
+    expect(groups.some((g) => g.label === 'Metro arrivals' && g.size === big)).toBe(true);
   });
 
-  it('merges below-minGroupSize routable groups into an "Other <mode> to <gate>" group', () => {
+  it('merges below-minGroupSize routable groups into a "<Mode> -> <Gate>" group', () => {
     const { groups } = buildGroups(registrations, event, venue);
-    expect(groups.some((g) => g.label.startsWith('Other metro to'))).toBe(true);
+    expect(groups.some((g) => g.label === 'Metro → Gate A')).toBe(true);
+    expect(groups.some((g) => g.label === 'Train → Gate C')).toBe(true);
+    expect(groups.some((g) => g.label === 'Car → Gate A')).toBe(true);
   });
 
   it('routes car registrations via the parking transport point (no longer unrouted)', () => {
@@ -105,7 +109,7 @@ describe('buildGroups — procession event (same code, different venue/event)', 
 });
 
 function loadCsvRows(fileName: string): { header: string[]; rows: Array<Record<string, string>> } {
-  const lines = readFileSync(path.join(samplesDir, fileName), 'utf8').trim().split('\n');
+  const lines = readFileSync(path.join(samplesDir, fileName), 'utf8').trim().split(/\r?\n/);
   const header = lines[0].split(',');
   const rows = lines.slice(1).map((line) => {
     const cells = line.split(',');
