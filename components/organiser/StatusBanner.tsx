@@ -1,4 +1,6 @@
-import { t } from '../../lib/organiser/messages';
+'use client';
+
+import { useT } from '../../lib/organiser/messages';
 import type { StatusLevel } from '../../lib/organiser/types';
 import { STATUS_COLOR } from './statusColor';
 
@@ -7,6 +9,7 @@ type Props = {
 };
 
 export default function StatusBanner({ status }: Props) {
+  const t = useT();
   const color = STATUS_COLOR[status];
 
   return (

@@ -43,7 +43,7 @@ export type ServiceStatus = {
   sample: boolean;
 };
 
-/** Top-level state the Overview, Service detail and Orders screens are built from. */
+/** Top-level state the console is built from. */
 export type ConsoleState = {
   eventId: string;
   eventName: string;
@@ -55,9 +55,14 @@ export type ConsoleState = {
   canPublish: boolean;
   /** true once "Publish plan" has been pressed for this event */
   published: boolean;
+  /** set once published — the "Live v<version>" tag and the /v?event= link. Optional: the real
+   * console route (lib/server/console/buildConsoleState.ts) doesn't set this yet. */
+  publishedVersion?: number | null;
   sample: boolean;
-  /** the crowd-flow graph (lib/server/console/buildFlowBoard.ts) — absent if the built board
-   * failed FlowBoardSchema validation server-side (see app/api/events/[id]/console/route.ts) */
+  /** the crowd-flow graph (lib/server/console/buildFlowBoard.ts) — falls back to a simple board
+   * built from ZoneFrame/ServiceStatus (lib/organiser/flowBoardFallback.ts) when absent, e.g. if
+   * the built board failed FlowBoardSchema validation server-side (see
+   * app/api/events/[id]/console/route.ts). */
   flowBoard?: FlowBoard;
 };
 

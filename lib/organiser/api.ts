@@ -159,6 +159,7 @@ export async function publishPlan(eventId: string): Promise<SubmitResult> {
   }
 
   store.state.published = true;
+  store.state.publishedVersion = (store.state.publishedVersion ?? 0) + 1;
   recompute(store);
   return { ok: true };
 }

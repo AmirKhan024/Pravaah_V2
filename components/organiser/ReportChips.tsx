@@ -1,4 +1,6 @@
-import { t } from '../../lib/organiser/messages';
+'use client';
+
+import { useT } from '../../lib/organiser/messages';
 import type { GroundReportChipId } from '../../lib/organiser/types';
 
 const CHIP_IDS: GroundReportChipId[] = ['rain', 'rail_delay', 'gates_late', 'more_people', 'fewer_people', 'slow_lanes'];
@@ -9,6 +11,7 @@ type Props = {
 };
 
 export default function ReportChips({ selected, onToggle }: Props) {
+  const t = useT();
   return (
     <div className="flex flex-wrap gap-2">
       {CHIP_IDS.map((chipId) => {

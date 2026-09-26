@@ -1,0 +1,54 @@
+{
+  "common": {
+    "loading": "लोड होत आहे"
+  },
+  "lang": {
+    "en": "English",
+    "hi": "हिंदी",
+    "mr": "मराठी"
+  },
+  "status": {
+    "calm": "शांत",
+    "watch": "लक्ष ठेवा",
+    "act_now": "आत्ताच कृती करा"
+  },
+  "nav": {
+    "ground_report": "ग्राउंड अहवाल",
+    "orders": "ऑर्डर",
+    "back": "मागे"
+  },
+  "detail": {
+    "do_it": "करा",
+    "not_now": "आत्ता नाही",
+    "why": "का?"
+  },
+  "report": {
+    "note_placeholder": "टीप जोडा",
+    "submit": "अहवाल द्या",
+    "sent": "अहवाल पाठवला",
+    "chips": {
+      "rain": "पाऊस",
+      "rail_delay": "रेल्वे विलंब",
+      "gates_late": "गेट उशिरा",
+      "more_people": "जास्त लोक",
+      "fewer_people": "कमी लोक",
+      "slow_lanes": "संथ लेन"
+    }
+  },
+  "now": {
+    "all_calm": "सर्व शांत"
+  },
+  "publish": {
+    "button": "योजना प्रकाशित करा",
+    "approve_first": "आधी मंजुरी द्या",
+    "live": "लाइव्ह",
+    "view_visitor_plan": "व्हिजिटर प्लॅन पहा"
+  },
+  "flow": {
+    "venue_node": "स्थळ"
+  },
+  "tags": {
+    "sample": "नमुना",
+    "assumption": "अंदाज"
+  }
+}

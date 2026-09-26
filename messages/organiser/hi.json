@@ -1,0 +1,54 @@
+{
+  "common": {
+    "loading": "लोड हो रहा है"
+  },
+  "lang": {
+    "en": "English",
+    "hi": "हिंदी",
+    "mr": "मराठी"
+  },
+  "status": {
+    "calm": "शांत",
+    "watch": "नज़र रखें",
+    "act_now": "अभी कार्रवाई करें"
+  },
+  "nav": {
+    "ground_report": "ग्राउंड रिपोर्ट",
+    "orders": "ऑर्डर",
+    "back": "वापस"
+  },
+  "detail": {
+    "do_it": "करें",
+    "not_now": "अभी नहीं",
+    "why": "क्यों?"
+  },
+  "report": {
+    "note_placeholder": "टिप्पणी जोड़ें",
+    "submit": "रिपोर्ट करें",
+    "sent": "रिपोर्ट भेजी गई",
+    "chips": {
+      "rain": "बारिश",
+      "rail_delay": "ट्रेन देरी",
+      "gates_late": "गेट देरी से",
+      "more_people": "अधिक लोग",
+      "fewer_people": "कम लोग",
+      "slow_lanes": "धीमी लेन"
+    }
+  },
+  "now": {
+    "all_calm": "सब शांत"
+  },
+  "publish": {
+    "button": "योजना प्रकाशित करें",
+    "approve_first": "पहले स्वीकृति दें",
+    "live": "लाइव",
+    "view_visitor_plan": "विज़िटर प्लान देखें"
+  },
+  "flow": {
+    "venue_node": "स्थल"
+  },
+  "tags": {
+    "sample": "नमूना",
+    "assumption": "अनुमान"
+  }
+}
