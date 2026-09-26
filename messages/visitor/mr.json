@@ -4,6 +4,13 @@
   "langEn": "English",
   "langHi": "हिंदी",
   "langMr": "मराठी",
+  "states": {
+    "loading": "प्लॅन लोडिंग",
+    "empty": "प्लॅन नाही",
+    "error": "प्लॅन त्रुटी",
+    "pickEvent": "इव्हेंट निवडा",
+    "back": "मागे जा"
+  },
   "form": {
     "comingFrom": "येण्याचे ठिकाण",
     "comingFromPlaceholder": "भाग किंवा शहर",
@@ -22,13 +29,13 @@
     "submit": "माझा प्लॅन मिळवा"
   },
   "plan": {
-    "stayLabel": "Stay",
-    "travelLabel": "Travel",
-    "gateLabel": "Gate",
-    "leaveAtLabel": "Leave at",
-    "eatLabel": "Eat",
+    "stayLabel": "मुक्काम",
+    "travelLabel": "प्रवास",
+    "gateLabel": "गेट",
+    "leaveAtLabel": "निघण्याची वेळ",
+    "eatLabel": "जेवण",
     "none": "काहीही नाही",
-    "coachIncluded": "बस उपलब्ध",
+    "coachIncluded": "बस सेवा उपलब्ध",
     "why": "का?",
     "whyStay": "हॉटेलमध्ये मुक्कामाची सोय.",
     "whyStayCoach": "हॉटेलसाठी खास बस सोय.",
