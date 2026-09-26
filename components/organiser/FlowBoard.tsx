@@ -7,6 +7,15 @@ const ROW_HEIGHT = 100;
 const NODE_W = 168;
 const NODE_H = 60;
 const SIDE_GAP = 50;
+/** rough chars-that-fit at fontSize 15 bold inside NODE_W minus padding — real venue/transport-
+ * point names can run much longer than the sample fixtures' short labels and would otherwise
+ * overflow the node box (and, for the first column, off the left edge of the viewBox). */
+const LABEL_MAX_CHARS = 20;
+
+function truncateLabel(label: string): string {
+  if (label.length <= LABEL_MAX_CHARS) return label;
+  return `${label.slice(0, LABEL_MAX_CHARS - 1).trimEnd()}…`;
+}
 
 type Position = { x: number; y: number };
 
@@ -84,6 +93,7 @@ export default function FlowBoard({ nodes, links, frame, focusedServiceId, onSel
 
           return (
             <g key={node.id} transform={`translate(${pos.x}, ${pos.y})`} className="cursor-pointer" onClick={() => onSelectService(node.service)}>
+              <title>{node.label}</title>
               <rect
                 width={NODE_W}
                 height={NODE_H}
@@ -95,7 +105,7 @@ export default function FlowBoard({ nodes, links, frame, focusedServiceId, onSel
               />
               <rect x={4} y={NODE_H - 10} width={(NODE_W - 8) * load} height={6} rx={3} fill={color.hex} opacity={0.9} />
               <text x={NODE_W / 2} y={NODE_H / 2 - 4} textAnchor="middle" fill="#F5F5F0" fontSize={15} fontWeight={600}>
-                {node.label}
+                {truncateLabel(node.label)}
               </text>
             </g>
           );

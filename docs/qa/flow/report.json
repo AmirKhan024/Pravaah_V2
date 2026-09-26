@@ -1,0 +1,72 @@
+[
+  {
+    "kind": "console-error",
+    "ctx": "stadium",
+    "detail": "A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:\n\n- A server/client branch `if (typeof window !== 'undefined')`.\n- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.\n- Date formatting in a user's locale which doesn't match the server.\n- External changing data without sending a snapshot of it along with the HTML.\n- Invalid HTML tag nesting.\n\nIt can also happen if the client has a browser extension installed which messes with the HTML before React loaded.\n\n%s%s https://react.dev/link/hydration-mismatch \n\n  ...\n    <HTTPAccessFallbackBoundary notFound={undefined} forbidden={undefined} unauthorized={undefined}>\n      <RedirectBoundary>\n        <RedirectErrorBoundary router={{...}}>\n          <InnerLayoutRouter url=\"/owner/reg...\" tree={[...]} params={{screen:\"re...\"}} cacheNode={{rsc:{...}, ...}} ...>\n            <SegmentViewNode type=\"page\" pagePath=\"(owner)/ow...\">\n              <SegmentTrieNode>\n              <OwnerPage>\n                <OwnerScreen screen=\"registrations\">\n                  <main className=\"min-h-scre...\">\n                    <div className=\"mx-auto gr...\">\n                      <aside>\n                      <section>\n                        <div>\n                        <Card>\n                          <section className=\"mb-5 round...\">\n                            <div className=\"block\">\n                              <span>\n                              <input\n                                type=\"file\"\n                                accept=\".csv,text/csv\"\n                                onChange={function onChange}\n                                className=\"block w-full text-sm text-white/65\"\n-                               style={{caret-color:\"transparent\"}}\n                              >\n                        ...\n            ...\n          ...\n"
+  },
+  {
+    "kind": "long-label",
+    "ctx": "stadium/console",
+    "detail": "\"Call Stack 19Show 16 ignore-listed frame(s)\" (6 words)"
+  },
+  {
+    "kind": "long-label",
+    "ctx": "stadium/console",
+    "detail": "\"Gate A\nGate B\nGate C\nRoutes\" (7 words)"
+  },
+  {
+    "kind": "long-label",
+    "ctx": "stadium/visitor-plan",
+    "detail": "\"← Go back\nVisitor Plan\" (5 words)"
+  },
+  {
+    "kind": "long-label",
+    "ctx": "procession/visitor-plan",
+    "detail": "\"← Go back\nVisitor Plan\" (5 words)"
+  },
+  {
+    "kind": "long-label",
+    "ctx": "calm/console",
+    "detail": "\"Gate A\nGate B\nGate C\" (6 words)"
+  },
+  {
+    "kind": "long-label",
+    "ctx": "visitor-i18n/mr",
+    "detail": "\"← मागे जा\nव्हिजिटर प्लॅन\" (5 words)"
+  },
+  {
+    "kind": "long-label",
+    "ctx": "visitor-i18n/mr",
+    "detail": "\"प्रवासाचे साधन\nट्रेन\nमेट्रो\nबस\nकार\nपायी\nइतर\" (8 words)"
+  },
+  {
+    "kind": "long-label",
+    "ctx": "visitor-i18n/mr",
+    "detail": "\"ट्रेन\nमेट्रो\nबस\nकार\nपायी\nइतर\" (6 words)"
+  },
+  {
+    "kind": "long-label",
+    "ctx": "visitor-i18n/mr",
+    "detail": "\"गटातील व्यक्ती\n-\n1\n+\" (5 words)"
+  },
+  {
+    "kind": "long-label",
+    "ctx": "visitor-i18n/hi",
+    "detail": "\"← पीछे जाएँ\nविज़िटर प्लान\" (5 words)"
+  },
+  {
+    "kind": "long-label",
+    "ctx": "visitor-i18n/hi",
+    "detail": "\"यात्रा का माध्यम\nट्रेन\nमेट्रो\nबस\nकार\nपैदल\nअन्य\" (9 words)"
+  },
+  {
+    "kind": "long-label",
+    "ctx": "visitor-i18n/hi",
+    "detail": "\"ट्रेन\nमेट्रो\nबस\nकार\nपैदल\nअन्य\" (6 words)"
+  },
+  {
+    "kind": "long-label",
+    "ctx": "visitor-i18n/hi",
+    "detail": "\"समूह में लोग\n-\n1\n+\" (6 words)"
+  }
+]
