@@ -119,6 +119,10 @@ describe('people conservation: entered + missed + stillInTransit + unrouted == t
     const accounting = computePeopleAccounting(scenario, result, unroutedTotal);
     expect(accounting.entered + accounting.missed + accounting.stillInTransit + accounting.unrouted).toBe(keptPeople);
     expect(accounting.totalRegistered).toBe(keptPeople);
+
+    // the floor at 0 must never be hiding a real accounting bug — assert the unfloored value
+    // directly (tiny float-rounding tolerance only)
+    expect(accounting.rawMissed).toBeGreaterThanOrEqual(-1);
   });
 });
 
