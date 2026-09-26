@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { t } from '../../lib/organiser/messages';
+import { useT } from '../../lib/organiser/messages';
 import type { SuggestedAction } from '../../lib/organiser/types';
 import SampleTag from './SampleTag';
 
@@ -12,6 +12,7 @@ type Props = {
 };
 
 export default function ActionCard({ action, onDo, onSkip }: Props) {
+  const t = useT();
   const [showWhy, setShowWhy] = useState(false);
 
   return (

@@ -1,0 +1,59 @@
+{
+  "common": {
+    "loading": "लोड हो रहा है"
+  },
+  "lang": {
+    "en": "English",
+    "hi": "हिंदी",
+    "mr": "मराठी"
+  },
+  "status": {
+    "calm": "शांत",
+    "watch": "नज़र रखें",
+    "act_now": "अभी कार्रवाई करें"
+  },
+  "nav": {
+    "overview": "सारांश",
+    "time": "समय दृश्य",
+    "ground_report": "ग्राउंड रिपोर्ट",
+    "orders": "ऑर्डर",
+    "back": "वापस"
+  },
+  "overview": {
+    "next_deadline": "अगली समय सीमा",
+    "publish": "योजना प्रकाशित करें",
+    "published": "प्रकाशित"
+  },
+  "detail": {
+    "do_it": "करें",
+    "not_now": "अभी नहीं",
+    "why": "क्यों?",
+    "done": "पूर्ण",
+    "skipped": "छोड़ा गया"
+  },
+  "time": {
+    "title": "समय दृश्य",
+    "zones": "क्षेत्र"
+  },
+  "report": {
+    "title": "ग्राउंड रिपोर्ट",
+    "note_placeholder": "टिप्पणी जोड़ें",
+    "submit": "रिपोर्ट करें",
+    "sent": "रिपोर्ट भेजी गई",
+    "chips": {
+      "rain": "बारिश",
+      "rail_delay": "ट्रेन देरी",
+      "gates_late": "गेट देरी से",
+      "more_people": "अधिक लोग",
+      "fewer_people": "कम लोग",
+      "slow_lanes": "धीमी लेन"
+    }
+  },
+  "orders": {
+    "title": "ऑर्डर"
+  },
+  "tags": {
+    "sample": "नमूना",
+    "assumption": "अनुमान"
+  }
+}

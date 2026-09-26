@@ -1,4 +1,6 @@
-import { t } from '../../lib/organiser/messages';
+'use client';
+
+import { useT } from '../../lib/organiser/messages';
 import type { ServiceStatus } from '../../lib/organiser/types';
 import ActionCard from './ActionCard';
 
@@ -10,6 +12,7 @@ type Props = {
 };
 
 export default function ServiceDetailScreen({ service, onDo, onSkip, onBack }: Props) {
+  const t = useT();
   const current = service.actions.find((action) => action.state === 'pending');
 
   return (

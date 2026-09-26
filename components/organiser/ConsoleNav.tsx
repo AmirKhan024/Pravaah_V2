@@ -1,4 +1,6 @@
-import { t } from '../../lib/organiser/messages';
+'use client';
+
+import { useT } from '../../lib/organiser/messages';
 import type { MessageKey } from '../../lib/organiser/messages';
 
 export type ConsoleScreen = 'overview' | 'service' | 'time' | 'ground' | 'orders';
@@ -16,6 +18,7 @@ type Props = {
 };
 
 export default function ConsoleNav({ active, onSelect }: Props) {
+  const t = useT();
   return (
     <nav className="flex gap-1 rounded-2xl border border-white/5 bg-white/[0.03] p-1">
       {TABS.map((tab) => (

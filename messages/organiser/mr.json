@@ -1,0 +1,59 @@
+{
+  "common": {
+    "loading": "लोड होत आहे"
+  },
+  "lang": {
+    "en": "English",
+    "hi": "हिंदी",
+    "mr": "मराठी"
+  },
+  "status": {
+    "calm": "शांत",
+    "watch": "लक्ष ठेवा",
+    "act_now": "आत्ताच कृती करा"
+  },
+  "nav": {
+    "overview": "सारांश",
+    "time": "वेळ दृश्य",
+    "ground_report": "ग्राउंड अहवाल",
+    "orders": "ऑर्डर",
+    "back": "मागे"
+  },
+  "overview": {
+    "next_deadline": "पुढील मुदत",
+    "publish": "योजना प्रकाशित करा",
+    "published": "प्रकाशित"
+  },
+  "detail": {
+    "do_it": "करा",
+    "not_now": "आत्ता नाही",
+    "why": "का?",
+    "done": "पूर्ण",
+    "skipped": "वगळले"
+  },
+  "time": {
+    "title": "वेळ दृश्य",
+    "zones": "झोन"
+  },
+  "report": {
+    "title": "ग्राउंड अहवाल",
+    "note_placeholder": "टीप जोडा",
+    "submit": "अहवाल द्या",
+    "sent": "अहवाल पाठवला",
+    "chips": {
+      "rain": "पाऊस",
+      "rail_delay": "रेल्वे विलंब",
+      "gates_late": "गेट उशिरा",
+      "more_people": "जास्त लोक",
+      "fewer_people": "कमी लोक",
+      "slow_lanes": "संथ लेन"
+    }
+  },
+  "orders": {
+    "title": "ऑर्डर"
+  },
+  "tags": {
+    "sample": "नमुना",
+    "assumption": "अंदाज"
+  }
+}

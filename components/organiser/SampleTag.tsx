@@ -1,4 +1,6 @@
-import { t } from '../../lib/organiser/messages';
+'use client';
+
+import { useT } from '../../lib/organiser/messages';
 
 type Props = {
   sample: boolean;
@@ -7,6 +9,7 @@ type Props = {
 };
 
 export default function SampleTag({ sample, kind = 'sample' }: Props) {
+  const t = useT();
   if (!sample) return null;
 
   return (

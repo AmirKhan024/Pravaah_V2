@@ -1,4 +1,6 @@
-import { t } from '../../lib/organiser/messages';
+'use client';
+
+import { useT } from '../../lib/organiser/messages';
 
 type Props = {
   canPublish: boolean;
@@ -7,6 +9,7 @@ type Props = {
 };
 
 export default function PublishButton({ canPublish, published, onPublish }: Props) {
+  const t = useT();
   const disabled = !canPublish || published;
 
   return (

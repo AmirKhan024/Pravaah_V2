@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { approveAction, getConsoleState, getFrames, getOrders, publishPlan, skipAction, submitReport } from '../../lib/organiser/api';
 import { APP_NAME } from '../../config/app';
-import type { ConsoleState, GroundReportSubmission, OrderView, ZoneFrame } from '../../lib/organiser/types';
+import { LangContext, t } from '../../lib/organiser/messages';
+import type { ConsoleLang, ConsoleState, GroundReportSubmission, OrderView, ZoneFrame } from '../../lib/organiser/types';
 import ConsoleNav, { type ConsoleScreen } from './ConsoleNav';
 import GroundReportScreen from './GroundReportScreen';
+import LanguageSwitch from './LanguageSwitch';
 import OrdersScreen from './OrdersScreen';
 import OverviewScreen from './OverviewScreen';
 import ServiceDetailScreen from './ServiceDetailScreen';
@@ -21,6 +23,7 @@ export default function ConsoleClient({ eventId }: Props) {
   const [orders, setOrders] = useState<OrderView[]>([]);
   const [screen, setScreen] = useState<ConsoleScreen>('overview');
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [lang, setLang] = useState<ConsoleLang>('en');
 
   const loadAll = useCallback(() => Promise.all([getConsoleState(eventId), getFrames(eventId), getOrders(eventId)]), [eventId]);
 
@@ -45,7 +48,7 @@ export default function ConsoleClient({ eventId }: Props) {
   }, [loadAll]);
 
   if (!state) {
-    return <div className="p-10 text-[#F5F5F0]/50">Loading…</div>;
+    return <div className="p-10 text-[#F5F5F0]/50">{t('common.loading', lang)}</div>;
   }
 
   function selectScreen(next: ConsoleScreen) {
@@ -80,25 +83,28 @@ export default function ConsoleClient({ eventId }: Props) {
   const selectedService = state.services.find((service) => service.id === selectedServiceId) ?? null;
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 px-6 py-8">
-      <header className="flex items-baseline justify-between">
-        <span className="text-sm font-medium text-[#F5F5F0]/50">{APP_NAME}</span>
-        <span className="text-sm text-[#F5F5F0]/50">{state.eventName}</span>
-      </header>
+    <LangContext.Provider value={{ lang, setLang }}>
+      <div className="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 px-6 py-8">
+        <header className="flex items-center justify-between">
+          <span className="text-sm font-medium text-[#F5F5F0]/50">{APP_NAME}</span>
+          <span className="text-sm text-[#F5F5F0]/50">{state.eventName}</span>
+          <LanguageSwitch />
+        </header>
 
-      <ConsoleNav active={screen} onSelect={selectScreen} />
+        <ConsoleNav active={screen} onSelect={selectScreen} />
 
-      {screen === 'overview' ? <OverviewScreen state={state} onSelectService={selectService} onPublish={handlePublish} /> : null}
+        {screen === 'overview' ? <OverviewScreen state={state} onSelectService={selectService} onPublish={handlePublish} /> : null}
 
-      {screen === 'service' && selectedService ? (
-        <ServiceDetailScreen service={selectedService} onDo={handleDo} onSkip={handleSkip} onBack={() => selectScreen('overview')} />
-      ) : null}
+        {screen === 'service' && selectedService ? (
+          <ServiceDetailScreen service={selectedService} onDo={handleDo} onSkip={handleSkip} onBack={() => selectScreen('overview')} />
+        ) : null}
 
-      {screen === 'time' ? <TimeScreen services={state.services} frames={frames} onBack={() => selectScreen('overview')} /> : null}
+        {screen === 'time' ? <TimeScreen services={state.services} frames={frames} onBack={() => selectScreen('overview')} /> : null}
 
-      {screen === 'ground' ? <GroundReportScreen onSubmit={handleReport} onBack={() => selectScreen('overview')} /> : null}
+        {screen === 'ground' ? <GroundReportScreen onSubmit={handleReport} onBack={() => selectScreen('overview')} /> : null}
 
-      {screen === 'orders' ? <OrdersScreen orders={orders} onBack={() => selectScreen('overview')} /> : null}
-    </div>
+        {screen === 'orders' ? <OrdersScreen orders={orders} onBack={() => selectScreen('overview')} /> : null}
+      </div>
+    </LangContext.Provider>
   );
 }

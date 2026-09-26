@@ -1,4 +1,12 @@
 {
+  "common": {
+    "loading": "Loading…"
+  },
+  "lang": {
+    "en": "English",
+    "hi": "हिंदी",
+    "mr": "मराठी"
+  },
   "status": {
     "calm": "Calm",
     "watch": "Watch",

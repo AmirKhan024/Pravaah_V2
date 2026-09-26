@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { t } from '../../lib/organiser/messages';
+import { useT } from '../../lib/organiser/messages';
 import type { GroundReportChipId, GroundReportSubmission } from '../../lib/organiser/types';
 import ReportChips from './ReportChips';
 
@@ -11,6 +11,7 @@ type Props = {
 };
 
 export default function GroundReportScreen({ onSubmit, onBack }: Props) {
+  const t = useT();
   const [selected, setSelected] = useState<GroundReportChipId[]>([]);
   const [note, setNote] = useState('');
   const [sent, setSent] = useState(false);
