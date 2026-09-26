@@ -13,30 +13,16 @@
     "act_now": "Act now"
   },
   "nav": {
-    "overview": "Overview",
-    "time": "Time view",
     "ground_report": "Ground report",
     "orders": "Orders",
     "back": "Back"
   },
-  "overview": {
-    "next_deadline": "Next deadline",
-    "publish": "Publish plan",
-    "published": "Published"
-  },
   "detail": {
     "do_it": "Do it",
     "not_now": "Not now",
-    "why": "Why?",
-    "done": "Done",
-    "skipped": "Skipped"
-  },
-  "time": {
-    "title": "Time view",
-    "zones": "Zones"
+    "why": "Why?"
   },
   "report": {
-    "title": "Ground report",
     "note_placeholder": "Add a note",
     "submit": "Report",
     "sent": "Report sent",
@@ -49,8 +35,17 @@
       "slow_lanes": "Slow lanes"
     }
   },
-  "orders": {
-    "title": "Orders"
+  "now": {
+    "all_calm": "All calm"
+  },
+  "publish": {
+    "button": "Publish plan",
+    "approve_first": "Approve first",
+    "live": "Live",
+    "view_visitor_plan": "View visitor plan"
+  },
+  "flow": {
+    "venue_node": "Venue"
   },
   "tags": {
     "sample": "sample",

@@ -1,4 +1,5 @@
 import type { ConsoleState, OrderView, ZoneFrame } from '../types';
+import { CALM_EVENT_ID, calmConsoleState, calmFrames, calmOrders } from './calm';
 import { PROCESSION_EVENT_ID, processionConsoleState, processionFrames, processionOrders } from './procession';
 import { STADIUM_EVENT_ID, stadiumConsoleState, stadiumFrames, stadiumOrders } from './stadium';
 
@@ -11,6 +12,7 @@ export type SampleBundle = {
 const BUILDERS: Record<string, () => SampleBundle> = {
   [STADIUM_EVENT_ID]: () => ({ state: stadiumConsoleState(), frames: stadiumFrames(), orders: stadiumOrders() }),
   [PROCESSION_EVENT_ID]: () => ({ state: processionConsoleState(), frames: processionFrames(), orders: processionOrders() }),
+  [CALM_EVENT_ID]: () => ({ state: calmConsoleState(), frames: calmFrames(), orders: calmOrders() }),
 };
 
 /** The event id the console falls back to when none is given in the URL. */
@@ -21,4 +23,4 @@ export function buildSampleBundle(eventId: string): SampleBundle | null {
   return build ? build() : null;
 }
 
-export { PROCESSION_EVENT_ID, STADIUM_EVENT_ID };
+export { CALM_EVENT_ID, PROCESSION_EVENT_ID, STADIUM_EVENT_ID };

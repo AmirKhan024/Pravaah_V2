@@ -41,7 +41,41 @@ export type ServiceStatus = {
   sample: boolean;
 };
 
-/** Top-level state the Overview, Service detail and Orders screens are built from. */
+/** One node kind a flow board can lay out — column order runs origin/transport -> gate -> venue,
+ * with hotel/food drawn as side nodes off that main pipeline. */
+export type FlowNodeKind = 'origin' | 'transport' | 'gate' | 'hotel' | 'food' | 'venue';
+
+export type FlowNode = {
+  id: string;
+  /** node label — comes entirely from data, never hardcoded in a component */
+  label: string;
+  kind: FlowNodeKind;
+  /** the ServiceStatus.id this node belongs to, for node-tap filtering */
+  service: string;
+};
+
+export type FlowLink = {
+  id: string;
+  from: string;
+  to: string;
+};
+
+/** load: 0 to 1 or more (1 = full). One frame per minute of the evening. */
+export type FlowFrame = {
+  minute: number;
+  nodes: Record<string, { load: number; status: StatusLevel }>;
+  links: Record<string, { load: number; status: StatusLevel }>;
+};
+
+/** The control room's schematic — another developer fills this from the engine. Falls back to a
+ * simple board built from ZoneFrame/ServiceStatus (see lib/organiser/flowBoardFallback.ts) when absent. */
+export type FlowBoard = {
+  nodes: FlowNode[];
+  links: FlowLink[];
+  frames: FlowFrame[];
+};
+
+/** Top-level state the console is built from. */
 export type ConsoleState = {
   eventId: string;
   eventName: string;
@@ -53,6 +87,10 @@ export type ConsoleState = {
   canPublish: boolean;
   /** true once "Publish plan" has been pressed for this event */
   published: boolean;
+  /** set once published — the "Live v<version>" tag and the /v?event= link. Optional: the real
+   * console route (lib/server/console/buildConsoleState.ts) doesn't set this yet. */
+  publishedVersion?: number | null;
+  flowBoard?: FlowBoard;
   sample: boolean;
 };
 

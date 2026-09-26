@@ -13,30 +13,16 @@
     "act_now": "अभी कार्रवाई करें"
   },
   "nav": {
-    "overview": "सारांश",
-    "time": "समय दृश्य",
     "ground_report": "ग्राउंड रिपोर्ट",
     "orders": "ऑर्डर",
     "back": "वापस"
   },
-  "overview": {
-    "next_deadline": "अगली समय सीमा",
-    "publish": "योजना प्रकाशित करें",
-    "published": "प्रकाशित"
-  },
   "detail": {
     "do_it": "करें",
     "not_now": "अभी नहीं",
-    "why": "क्यों?",
-    "done": "पूर्ण",
-    "skipped": "छोड़ा गया"
-  },
-  "time": {
-    "title": "समय दृश्य",
-    "zones": "क्षेत्र"
+    "why": "क्यों?"
   },
   "report": {
-    "title": "ग्राउंड रिपोर्ट",
     "note_placeholder": "टिप्पणी जोड़ें",
     "submit": "रिपोर्ट करें",
     "sent": "रिपोर्ट भेजी गई",
@@ -49,8 +35,17 @@
       "slow_lanes": "धीमी लेन"
     }
   },
-  "orders": {
-    "title": "ऑर्डर"
+  "now": {
+    "all_calm": "सब शांत"
+  },
+  "publish": {
+    "button": "योजना प्रकाशित करें",
+    "approve_first": "पहले स्वीकृति दें",
+    "live": "लाइव",
+    "view_visitor_plan": "विज़िटर प्लान देखें"
+  },
+  "flow": {
+    "venue_node": "स्थल"
   },
   "tags": {
     "sample": "नमूना",

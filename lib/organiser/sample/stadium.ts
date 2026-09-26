@@ -1,4 +1,58 @@
-import type { ConsoleState, OrderView, ZoneFrame } from '../types';
+import type { ConsoleState, FlowBoard, OrderView, StatusLevel, ZoneFrame } from '../types';
+
+const LOAD_FOR: Record<StatusLevel, number> = { calm: 0.35, watch: 0.7, act_now: 1.1 };
+
+const STADIUM_NODES: FlowBoard['nodes'] = [
+  { id: 'metro_origin', label: 'Kharghar Metro', kind: 'origin', service: 'travel' },
+  { id: 'train_origin', label: 'Panvel Station', kind: 'origin', service: 'travel' },
+  { id: 'hotel_kharghar', label: 'Kharghar Grand', kind: 'hotel', service: 'hotels' },
+  { id: 'gate_a', label: 'Gate A', kind: 'gate', service: 'gates' },
+  { id: 'gate_b', label: 'Gate B', kind: 'gate', service: 'gates' },
+  { id: 'gate_c', label: 'Gate C', kind: 'gate', service: 'gates' },
+  { id: 'food_zone_2', label: 'Food Zone 2', kind: 'food', service: 'food' },
+  { id: 'venue_bowl', label: 'Stadium Bowl', kind: 'venue', service: 'venue' },
+];
+
+const STADIUM_LINKS: FlowBoard['links'] = [
+  { id: 'link_metro_gate_a', from: 'metro_origin', to: 'gate_a' },
+  { id: 'link_hotel_gate_a', from: 'hotel_kharghar', to: 'gate_a' },
+  { id: 'link_train_gate_c', from: 'train_origin', to: 'gate_c' },
+  { id: 'link_gate_a_venue', from: 'gate_a', to: 'venue_bowl' },
+  { id: 'link_gate_b_venue', from: 'gate_b', to: 'venue_bowl' },
+  { id: 'link_gate_c_venue', from: 'gate_c', to: 'venue_bowl' },
+  { id: 'link_food_venue', from: 'food_zone_2', to: 'venue_bowl' },
+];
+
+function stadiumFlowFrame(minute: number, byService: Record<string, StatusLevel>): FlowBoard['frames'][number] {
+  const nodes: FlowBoard['frames'][number]['nodes'] = {};
+  let worst: StatusLevel = 'calm';
+  for (const node of STADIUM_NODES) {
+    const status = node.kind === 'venue' ? worst : (byService[node.service] ?? 'calm');
+    nodes[node.id] = { load: LOAD_FOR[status], status };
+  }
+  for (const node of STADIUM_NODES) {
+    if (node.kind === 'venue') continue;
+    const s = byService[node.service] ?? 'calm';
+    if (s === 'act_now' || (s === 'watch' && worst === 'calm')) worst = s;
+  }
+  nodes.venue_bowl = { load: LOAD_FOR[worst], status: worst };
+
+  const links: FlowBoard['frames'][number]['links'] = {};
+  for (const link of STADIUM_LINKS) links[link.id] = nodes[link.from] ?? { load: 0.35, status: 'calm' };
+
+  return { minute, nodes, links };
+}
+
+export function stadiumFlowBoard(): FlowBoard {
+  const byMinute: Array<[number, Record<string, StatusLevel>]> = [
+    [0, { hotels: 'calm', travel: 'calm', gates: 'calm', routes: 'calm', food: 'calm' }],
+    [30, { hotels: 'calm', travel: 'watch', gates: 'watch', routes: 'calm', food: 'calm' }],
+    [60, { hotels: 'watch', travel: 'act_now', gates: 'act_now', routes: 'watch', food: 'calm' }],
+    [90, { hotels: 'watch', travel: 'act_now', gates: 'act_now', routes: 'watch', food: 'watch' }],
+    [120, { hotels: 'calm', travel: 'watch', gates: 'watch', routes: 'calm', food: 'watch' }],
+  ];
+  return { nodes: STADIUM_NODES, links: STADIUM_LINKS, frames: byMinute.map(([minute, byService]) => stadiumFlowFrame(minute, byService)) };
+}
 
 /** Continental Cup Final — 5 services, sample:true throughout (see contract/samples/event-stadium.json). */
 export const STADIUM_EVENT_ID = 'event_stadium_final';
@@ -11,7 +65,9 @@ export function stadiumConsoleState(): ConsoleState {
     sample: true,
     canPublish: false,
     published: false,
+    publishedVersion: null,
     nextDeadline: { value: 15, unit: 'min', sample: true },
+    flowBoard: stadiumFlowBoard(),
     services: [
       {
         id: 'hotels',

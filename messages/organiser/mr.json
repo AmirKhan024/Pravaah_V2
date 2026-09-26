@@ -13,30 +13,16 @@
     "act_now": "आत्ताच कृती करा"
   },
   "nav": {
-    "overview": "सारांश",
-    "time": "वेळ दृश्य",
     "ground_report": "ग्राउंड अहवाल",
     "orders": "ऑर्डर",
     "back": "मागे"
   },
-  "overview": {
-    "next_deadline": "पुढील मुदत",
-    "publish": "योजना प्रकाशित करा",
-    "published": "प्रकाशित"
-  },
   "detail": {
     "do_it": "करा",
     "not_now": "आत्ता नाही",
-    "why": "का?",
-    "done": "पूर्ण",
-    "skipped": "वगळले"
-  },
-  "time": {
-    "title": "वेळ दृश्य",
-    "zones": "झोन"
+    "why": "का?"
   },
   "report": {
-    "title": "ग्राउंड अहवाल",
     "note_placeholder": "टीप जोडा",
     "submit": "अहवाल द्या",
     "sent": "अहवाल पाठवला",
@@ -49,8 +35,17 @@
       "slow_lanes": "संथ लेन"
     }
   },
-  "orders": {
-    "title": "ऑर्डर"
+  "now": {
+    "all_calm": "सर्व शांत"
+  },
+  "publish": {
+    "button": "योजना प्रकाशित करा",
+    "approve_first": "आधी मंजुरी द्या",
+    "live": "लाइव्ह",
+    "view_visitor_plan": "व्हिजिटर प्लॅन पहा"
+  },
+  "flow": {
+    "venue_node": "स्थळ"
   },
   "tags": {
     "sample": "नमुना",

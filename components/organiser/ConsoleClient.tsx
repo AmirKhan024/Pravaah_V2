@@ -1,17 +1,17 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { approveAction, getConsoleState, getFrames, getOrders, publishPlan, skipAction, submitReport } from '../../lib/organiser/api';
-import { APP_NAME } from '../../config/app';
+import { buildFallbackFlowBoard } from '../../lib/organiser/flowBoardFallback';
 import { LangContext, t } from '../../lib/organiser/messages';
 import type { ConsoleLang, ConsoleState, GroundReportSubmission, OrderView, ZoneFrame } from '../../lib/organiser/types';
-import ConsoleNav, { type ConsoleScreen } from './ConsoleNav';
+import Drawer from './Drawer';
+import FlowBoard from './FlowBoard';
 import GroundReportScreen from './GroundReportScreen';
-import LanguageSwitch from './LanguageSwitch';
+import NowPanel from './NowPanel';
 import OrdersScreen from './OrdersScreen';
-import OverviewScreen from './OverviewScreen';
-import ServiceDetailScreen from './ServiceDetailScreen';
-import TimeScreen from './TimeScreen';
+import TimeStrip from './TimeStrip';
+import TopBar from './TopBar';
 
 type Props = {
   eventId: string;
@@ -21,9 +21,11 @@ export default function ConsoleClient({ eventId }: Props) {
   const [state, setState] = useState<ConsoleState | null>(null);
   const [frames, setFrames] = useState<ZoneFrame[]>([]);
   const [orders, setOrders] = useState<OrderView[]>([]);
-  const [screen, setScreen] = useState<ConsoleScreen>('overview');
-  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [lang, setLang] = useState<ConsoleLang>('en');
+  const [minuteIndex, setMinuteIndex] = useState(0);
+  const [focusedServiceId, setFocusedServiceId] = useState<string | null>(null);
+  const [groundOpen, setGroundOpen] = useState(false);
+  const [ordersOpen, setOrdersOpen] = useState(false);
 
   const loadAll = useCallback(() => Promise.all([getConsoleState(eventId), getFrames(eventId), getOrders(eventId)]), [eventId]);
 
@@ -47,18 +49,18 @@ export default function ConsoleClient({ eventId }: Props) {
     };
   }, [loadAll]);
 
-  if (!state) {
+  const flowBoard = useMemo(() => {
+    if (!state) return null;
+    return state.flowBoard ?? buildFallbackFlowBoard(state.services, frames, t('flow.venue_node', lang));
+  }, [state, frames, lang]);
+
+  if (!state || !flowBoard) {
     return <div className="p-10 text-[#F5F5F0]/50">{t('common.loading', lang)}</div>;
   }
 
-  function selectScreen(next: ConsoleScreen) {
-    setSelectedServiceId(null);
-    setScreen(next);
-  }
-
   function selectService(serviceId: string) {
-    setSelectedServiceId(serviceId);
-    setScreen('service');
+    const exists = state!.services.some((s) => s.id === serviceId);
+    setFocusedServiceId((prev) => (!exists ? null : prev === serviceId ? null : serviceId));
   }
 
   async function handleDo(actionId: string) {
@@ -80,31 +82,32 @@ export default function ConsoleClient({ eventId }: Props) {
     await submitReport(eventId, report);
   }
 
-  const selectedService = state.services.find((service) => service.id === selectedServiceId) ?? null;
+  const index = Math.min(minuteIndex, Math.max(flowBoard.frames.length - 1, 0));
 
   return (
     <LangContext.Provider value={{ lang, setLang }}>
-      <div className="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 px-6 py-8">
-        <header className="flex items-center justify-between">
-          <span className="text-sm font-medium text-[#F5F5F0]/50">{APP_NAME}</span>
-          <span className="text-sm text-[#F5F5F0]/50">{state.eventName}</span>
-          <LanguageSwitch />
-        </header>
+      <div className="mx-auto flex min-h-screen max-w-[1600px] flex-col gap-4 px-6 py-6">
+        <TopBar state={state} onPublish={handlePublish} onOpenGroundReport={() => setGroundOpen(true)} onOpenOrders={() => setOrdersOpen(true)} />
 
-        <ConsoleNav active={screen} onSelect={selectScreen} />
+        <div className="flex flex-1 flex-col gap-4 lg:flex-row">
+          <div className="lg:w-[65%]">
+            <FlowBoard nodes={flowBoard.nodes} links={flowBoard.links} frame={flowBoard.frames[index]} focusedServiceId={focusedServiceId} onSelectService={selectService} />
+          </div>
+          <div className="lg:w-[35%]">
+            <NowPanel statusWord={state.statusWord} services={state.services} focusedServiceId={focusedServiceId} onDo={handleDo} onSkip={handleSkip} />
+          </div>
+        </div>
 
-        {screen === 'overview' ? <OverviewScreen state={state} onSelectService={selectService} onPublish={handlePublish} /> : null}
-
-        {screen === 'service' && selectedService ? (
-          <ServiceDetailScreen service={selectedService} onDo={handleDo} onSkip={handleSkip} onBack={() => selectScreen('overview')} />
-        ) : null}
-
-        {screen === 'time' ? <TimeScreen services={state.services} frames={frames} onBack={() => selectScreen('overview')} /> : null}
-
-        {screen === 'ground' ? <GroundReportScreen onSubmit={handleReport} onBack={() => selectScreen('overview')} /> : null}
-
-        {screen === 'orders' ? <OrdersScreen orders={orders} onBack={() => selectScreen('overview')} /> : null}
+        <TimeStrip frames={frames} index={index} onChange={setMinuteIndex} />
       </div>
+
+      <Drawer open={groundOpen} onClose={() => setGroundOpen(false)}>
+        <GroundReportScreen onSubmit={handleReport} onBack={() => setGroundOpen(false)} />
+      </Drawer>
+
+      <Drawer open={ordersOpen} onClose={() => setOrdersOpen(false)}>
+        <OrdersScreen orders={orders} onBack={() => setOrdersOpen(false)} />
+      </Drawer>
     </LangContext.Provider>
   );
 }

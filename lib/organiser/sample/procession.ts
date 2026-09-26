@@ -1,4 +1,55 @@
-import type { ConsoleState, OrderView, ZoneFrame } from '../types';
+import type { ConsoleState, FlowBoard, OrderView, StatusLevel, ZoneFrame } from '../types';
+
+const LOAD_FOR: Record<StatusLevel, number> = { calm: 0.35, watch: 0.7, act_now: 1.1 };
+
+/** No hotel node here — a different shape from the stadium board, and a "transport" kind node
+ * (the stadium board never uses one), matching the no-Hotels theme of this event. */
+const PROCESSION_NODES: FlowBoard['nodes'] = [
+  { id: 'entrance_lalbaug', label: 'Lalbaug Entry', kind: 'origin', service: 'crowd_flow' },
+  { id: 'entrance_chowpatty', label: 'Chowpatty Entry', kind: 'origin', service: 'crowd_flow' },
+  { id: 'shuttle_charni', label: 'Charni Road Buses', kind: 'transport', service: 'travel' },
+  { id: 'checkpoint_1', label: 'Lalbaug Checkpoint', kind: 'gate', service: 'gates' },
+  { id: 'checkpoint_2', label: 'Chowpatty Checkpoint', kind: 'gate', service: 'gates' },
+  { id: 'food_girgaon', label: 'Girgaon Food', kind: 'food', service: 'food' },
+  { id: 'venue_chowpatty', label: 'Chowpatty Grounds', kind: 'venue', service: 'venue' },
+];
+
+const PROCESSION_LINKS: FlowBoard['links'] = [
+  { id: 'link_lalbaug_cp1', from: 'entrance_lalbaug', to: 'checkpoint_1' },
+  { id: 'link_shuttle_cp2', from: 'shuttle_charni', to: 'checkpoint_2' },
+  { id: 'link_chowpatty_cp2', from: 'entrance_chowpatty', to: 'checkpoint_2' },
+  { id: 'link_cp1_venue', from: 'checkpoint_1', to: 'venue_chowpatty' },
+  { id: 'link_cp2_venue', from: 'checkpoint_2', to: 'venue_chowpatty' },
+  { id: 'link_food_venue', from: 'food_girgaon', to: 'venue_chowpatty' },
+];
+
+function processionFlowFrame(minute: number, byService: Record<string, StatusLevel>): FlowBoard['frames'][number] {
+  const nodes: FlowBoard['frames'][number]['nodes'] = {};
+  let worst: StatusLevel = 'calm';
+  for (const node of PROCESSION_NODES) {
+    if (node.kind === 'venue') continue;
+    const s = byService[node.service] ?? 'calm';
+    nodes[node.id] = { load: LOAD_FOR[s], status: s };
+    if (s === 'act_now' || (s === 'watch' && worst === 'calm')) worst = s;
+  }
+  nodes.venue_chowpatty = { load: LOAD_FOR[worst], status: worst };
+
+  const links: FlowBoard['frames'][number]['links'] = {};
+  for (const link of PROCESSION_LINKS) links[link.id] = nodes[link.from] ?? { load: 0.35, status: 'calm' };
+
+  return { minute, nodes, links };
+}
+
+export function processionFlowBoard(): FlowBoard {
+  const byMinute: Array<[number, Record<string, StatusLevel>]> = [
+    [0, { crowd_flow: 'calm', travel: 'calm', gates: 'calm', routes: 'calm', food: 'calm' }],
+    [30, { crowd_flow: 'watch', travel: 'calm', gates: 'watch', routes: 'calm', food: 'calm' }],
+    [60, { crowd_flow: 'act_now', travel: 'watch', gates: 'watch', routes: 'watch', food: 'calm' }],
+    [90, { crowd_flow: 'act_now', travel: 'watch', gates: 'act_now', routes: 'watch', food: 'watch' }],
+    [120, { crowd_flow: 'watch', travel: 'calm', gates: 'watch', routes: 'calm', food: 'watch' }],
+  ];
+  return { nodes: PROCESSION_NODES, links: PROCESSION_LINKS, frames: byMinute.map(([minute, byService]) => processionFlowFrame(minute, byService)) };
+}
 
 /** Ganesh Visarjan Procession — no Hotels service, has Crowd-flow instead (see
  * contract/samples/event-procession.json). Same components render this unchanged. */
@@ -12,7 +63,9 @@ export function processionConsoleState(): ConsoleState {
     sample: true,
     canPublish: false,
     published: false,
+    publishedVersion: null,
     nextDeadline: { value: 10, unit: 'min', sample: true },
+    flowBoard: processionFlowBoard(),
     services: [
       {
         id: 'crowd_flow',
