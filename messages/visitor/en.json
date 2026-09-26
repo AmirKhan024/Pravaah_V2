@@ -4,6 +4,13 @@
   "langEn": "English",
   "langHi": "हिंदी",
   "langMr": "मराठी",
+  "states": {
+    "loading": "Loading plan",
+    "empty": "No plan",
+    "error": "Plan error",
+    "pickEvent": "Pick event",
+    "back": "Go back"
+  },
   "form": {
     "comingFrom": "Coming from",
     "comingFromPlaceholder": "Area or city name",
@@ -28,7 +35,7 @@
     "leaveAtLabel": "Leave at",
     "eatLabel": "Eat",
     "none": "None",
-    "coachIncluded": "Coach",
+    "coachIncluded": "Coach included",
     "why": "Why?",
     "whyStay": "Stay arranged at hotel.",
     "whyStayCoach": "Dedicated coach provided for hotel.",

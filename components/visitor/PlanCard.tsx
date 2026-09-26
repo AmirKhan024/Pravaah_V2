@@ -11,10 +11,9 @@ interface PlanCardProps {
 }
 
 export function PlanCard({ plan, dict, highlightedKeys }: PlanCardProps) {
-  // Stay text
-  const stayText = plan.stay
-    ? `${plan.stay.hotelName}${plan.stay.coach ? ` • ${dict.plan.coachIncluded}` : ''}`
-    : dict.plan.none;
+  // Stay text & sub-value
+  const stayValue = plan.stay ? plan.stay.hotelName : dict.plan.none;
+  const staySubValue = plan.stay && plan.stay.coach ? dict.plan.coachIncluded : undefined;
 
   const stayWhy = plan.stay
     ? plan.stay.coach
@@ -22,21 +21,24 @@ export function PlanCard({ plan, dict, highlightedKeys }: PlanCardProps) {
       : dict.plan.whyStay
     : dict.plan.whyStayNone;
 
-  // Travel text (mode formatted)
+  // Travel text & sub-value
   const travelModeFormatted =
     dict.form.travelModes[plan.travel.mode as keyof typeof dict.form.travelModes] ||
     plan.travel.mode;
-  const travelText = `${travelModeFormatted} • ${plan.travel.departTime}`;
+  const travelValue = plan.travel.departTime;
+  const travelSubValue = travelModeFormatted;
 
-  // Food text
-  const foodText = plan.food ? plan.food.zoneName : dict.plan.none;
+  // Food text & sub-value
+  const foodValue = plan.food ? plan.food.zoneName : dict.plan.none;
+  const foodSubValue = plan.food ? plan.food.window : undefined;
 
   return (
     <div className="flex flex-col gap-3 w-full max-w-sm mx-auto p-4 rounded-2xl bg-[#141E1B] border border-gray-800 shadow-xl">
       {/* Row 1: Stay */}
       <PlanRow
         label={dict.plan.stayLabel}
-        value={stayText}
+        value={stayValue}
+        subValue={staySubValue}
         whyText={stayWhy}
         isHighlighted={highlightedKeys?.has('stay')}
         dict={dict}
@@ -45,7 +47,8 @@ export function PlanCard({ plan, dict, highlightedKeys }: PlanCardProps) {
       {/* Row 2: Travel */}
       <PlanRow
         label={dict.plan.travelLabel}
-        value={travelText}
+        value={travelValue}
+        subValue={travelSubValue}
         whyText={dict.plan.whyTravel}
         isHighlighted={highlightedKeys?.has('travel')}
         dict={dict}
@@ -72,7 +75,8 @@ export function PlanCard({ plan, dict, highlightedKeys }: PlanCardProps) {
       {/* Row 5: Eat */}
       <PlanRow
         label={dict.plan.eatLabel}
-        value={foodText}
+        value={foodValue}
+        subValue={foodSubValue}
         whyText={dict.plan.whyEat}
         isHighlighted={highlightedKeys?.has('food')}
         dict={dict}
