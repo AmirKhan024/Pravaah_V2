@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { simulate } from '../engine/simulate';
+import { probeWaits, simulate } from '../engine/simulate';
 import { buildGroups } from '../lib/server/registrations/buildGroups';
 import { mapColumns } from '../lib/server/registrations/mapColumns';
 import { normalizeRegistrations } from '../lib/server/registrations/normalize';
@@ -79,5 +79,39 @@ describe('toEngineScenario', () => {
     const scenario = toEngineScenario(event, venue, groups);
     const gateZone = scenario.zones.find((z) => z.type === 'gate');
     expect(gateZone?.estimated).toBe(true); // every stadium gate sample value is claimed/documented, never fully observed
+  });
+});
+
+describe('accounting: nobody from our own cohorts silently vanishes', () => {
+  /**
+   * SimResult.missed = venue CAPACITY minus arrived (engine/simulate.ts) — it's relative to the
+   * venue's full capacity, not to our (much smaller) registered sample, so it's expected to be
+   * large whenever a sample is a fraction of capacity. That is NOT what this test checks. This
+   * checks a different, sample-relative invariant: every person WE registered is accounted for —
+   * either they arrived, or they're still moving through a zone/link — and none of them are stuck
+   * given that gate/link capacity comfortably exceeds their demand (confirmed separately: peak
+   * demand at every gate and approach link is under 10% of its capacity for this sample).
+   */
+  it('stadium: cohort total = arrived + still in transit, with ~0 unaccounted for', async () => {
+    const { event, venue, groups } = await loadScenarioInputs('event-stadium.json', 'venue-stadium.json', 'registrations-stadium-small.csv');
+    const scenario = toEngineScenario(event, venue, groups);
+    const cohortTotal = scenario.cohorts.reduce((s, c) => s + c.size, 0);
+
+    const waits = probeWaits(scenario);
+    const result = simulate(scenario, [], { waits });
+    const finalFrame = result.frames[result.frames.length - 1];
+
+    const venueZoneIdx = scenario.zones.findIndex((z) => z.type === 'venue');
+    const arrived = finalFrame.zoneOcc[venueZoneIdx] ?? 0;
+    const stillInTransit =
+      scenario.links.reduce((s, _l, i) => s + (finalFrame.linkOcc[i] ?? 0), 0) +
+      scenario.zones.reduce((s, z, i) => s + (z.type !== 'venue' ? (finalFrame.zoneOcc[i] ?? 0) : 0), 0);
+
+    const unaccountedFor = cohortTotal - arrived - stillInTransit;
+    expect(Math.abs(unaccountedFor)).toBeLessThan(cohortTotal * 0.02); // within rounding, not "missing"
+
+    // gate/link capacity comfortably exceeds this sample's demand everywhere, so nobody should be
+    // stuck queuing at showStart either
+    expect(result.maxGateWait).toBeLessThan(5); // minutes
   });
 });
