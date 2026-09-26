@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { t } from '../../lib/organiser/messages';
+import { useT } from '../../lib/organiser/messages';
 import type { ServiceStatus, ZoneFrame } from '../../lib/organiser/types';
 import { STATUS_COLOR } from './statusColor';
 import TimeSlider from './TimeSlider';
@@ -14,6 +14,7 @@ type Props = {
 };
 
 export default function TimeScreen({ services, frames, onBack }: Props) {
+  const t = useT();
   const [index, setIndex] = useState(0);
   const frame = frames[index];
 

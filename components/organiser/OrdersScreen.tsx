@@ -1,4 +1,6 @@
-import { t } from '../../lib/organiser/messages';
+'use client';
+
+import { useT } from '../../lib/organiser/messages';
 import type { OrderStatus } from '../../contract/schemas';
 import type { OrderView } from '../../lib/organiser/types';
 import SampleTag from './SampleTag';
@@ -16,6 +18,7 @@ type Props = {
 };
 
 export default function OrdersScreen({ orders, onBack }: Props) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-6">
       <button type="button" onClick={onBack} className="self-start text-sm text-[#F5F5F0]/60 hover:text-[#F5F5F0]">

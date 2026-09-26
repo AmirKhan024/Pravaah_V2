@@ -1,4 +1,6 @@
-import { t } from '../../lib/organiser/messages';
+'use client';
+
+import { useT } from '../../lib/organiser/messages';
 import type { ZoneCell } from '../../lib/organiser/types';
 import { STATUS_COLOR } from './statusColor';
 
@@ -7,6 +9,7 @@ type Props = {
 };
 
 export default function ZoneBoard({ zones }: Props) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-3">
       <span className="text-xs uppercase tracking-wide text-[#F5F5F0]/50">{t('time.zones')}</span>

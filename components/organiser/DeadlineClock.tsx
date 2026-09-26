@@ -1,4 +1,6 @@
-import { t } from '../../lib/organiser/messages';
+'use client';
+
+import { useT } from '../../lib/organiser/messages';
 import type { DisplayNumber } from '../../lib/organiser/types';
 import SampleTag from './SampleTag';
 
@@ -7,6 +9,7 @@ type Props = {
 };
 
 export default function DeadlineClock({ deadline }: Props) {
+  const t = useT();
   if (!deadline) return null;
 
   return (
