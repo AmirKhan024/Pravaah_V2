@@ -1,0 +1,14 @@
+# QA Report: Visitor & Owner Screens
+
+| Screen | Problem | Severity | Suggested Fix |
+| --- | --- | --- | --- |
+| `/v/plan` | Row labels (`stayLabel`, `travelLabel`, `gateLabel`, `leaveAtLabel`, `eatLabel`) are untranslated English strings ("Stay", "Travel", "Gate", "Leave at", "Eat") in both Marathi (`mr.json`) and Hindi (`hi.json`). | High | Translate labels in `hi.json` (`रहना`/`रहाइश`, `यात्रा`, `गेट`, `रवानगी`, `भोजन`) and `mr.json` (`मुक्काम`, `प्रवास`, `गेट`, `निघण्याची वेळ`, `जेवण`). |
+| `/v/plan` | Displays sample plan fixture data (`Kharghar Grand`, `Gate A`, `17:10`, `18:40`, `North Concourse Food Court`) without a "sample" tag/badge. | High | Add a `<SampleTag />` badge or "Sample Data" indicator on the plan card header when `plan.sample` is true. |
+| `/owner/venue` | Displays sample venue fixture data without any "sample" tag/badge indicator. | High | Add a "Sample" badge or tag near the venue page header when displaying sample fixture data. |
+| `/owner/venue` | Exceeds the 3-number visibility limit by showing 6+ numbers (`Total area`, `Capacity`, `Lanes`, `Forecourt area`, `Parking spaces`, `Parking area`) plus sidebar numbers (`01`-`04`) simultaneously. | High | Reorganize venue fields into tabbed or accordion sections (e.g., General, Gates, Parking, Entrances) so max 3 numbers are visible at once. |
+| `/owner/event` | Exceeds the 3-number visibility limit by showing 10+ numbers (`Date`, `Gates open`, `Start time`, `End time`, `Rooms`, `Occupied`, `Distance`, `Pulse size`, etc.) on screen at once. | High | Split event setup into step tabs (Schedule, Hotel, Transport) to restrict visible numbers to at most 3 per view. |
+| `/owner/event` | Displays `sampleEvent` fixture data without a "sample" tag/badge. | High | Add a "Sample" tag badge to the event screen header. |
+| `/owner/registrations` | Registration preview table displays dozens of numbers simultaneously, violating the 3-number limit rule. | High | Paginate table or collapse numeric metrics under an expandable view to keep visible numbers <= 3. |
+| `/owner/venue`, `/owner/documents`, `/owner/event`, `/owner/registrations` | Action buttons (`Save venue`, `Check document`, `Save event`, `Upload`) have height ~40px (`py-2.5`), and sidebar links have height ~36px (`py-2`), violating the 44px min tap target rule. | Low | Add `min-h-[44px] flex items-center` to all sidebar nav links and action buttons. |
+| `/v` | Placeholder text for hotel input in Hindi (`stayingAtPlaceholder` in `hi.json`) is 6 words ("होटल का नाम (या कोई नहीं)"), exceeding the 4-word text rule. | Low | Shorten Hindi placeholder to "होटल का नाम (वैकल्पिक)" (4 words). |
+| `/v` | Title string in Marathi (`appTitle` in `mr.json`) uses transliterated English "व्हिजिटर प्लॅन" instead of proper Marathi vocabulary. | Low | Change `appTitle` in `mr.json` to "भेत योजना" or "प्रवाह प्लॅन". |
