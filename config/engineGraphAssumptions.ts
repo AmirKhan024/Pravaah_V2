@@ -23,4 +23,13 @@ export const ENGINE_GRAPH_ASSUMPTIONS = {
    * here, but Venue.gates/transportPoints carry no coordinates, so gate/parking/hotel zones all
    * reuse the venue's own lat/lng — there is no real distance model between them yet) */
   fallbackAreaM2: 2000,
+  /** assumption: coach road speed, m/min — same order as the removed arrivalRules road speed */
+  coachSpeedMPerMin: 350,
+  /** assumption: coach capacity (people/min) when EventHotel.coachCapacity isn't given */
+  fallbackCoachCapPerMin: 60,
+  /** assumption: ₹ per coach dispatched — for a future coach-scheduling lever's cost reporting */
+  coachCostRupees: 3500,
+  /** assumption: a coach's departure can be moved at most this many minutes earlier than its
+   * default time — for a future coach-scheduling lever's feasibility bound */
+  maxCoachShiftMin: 60,
 } as const;

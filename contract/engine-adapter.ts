@@ -1,7 +1,7 @@
 import { ENGINE_GRAPH_ASSUMPTIONS as G } from '../config/engineGraphAssumptions';
 import { discountedCapacity, isEstimated } from '../config/trust';
 import type { Link, Scenario, Zone } from '../engine/types';
-import { parseHHMM } from '../lib/server/scenario/arrivalRules';
+import { findMatchingTransportOption, parseHHMM } from '../lib/server/scenario/arrivalRules';
 import type { CrowdGroup, Event, Trusted, Venue } from './schemas';
 
 /**
@@ -27,8 +27,13 @@ import type { CrowdGroup, Event, Trusted, Venue } from './schemas';
  * Known gaps, not invented around (see the gaps this leaves, reported by the caller):
  *  - Venue carries no gate/parking coordinates, so every gate/parking/hotel zone reuses the
  *    venue's own lat/lng — there is no real distance model between them yet.
- *  - EventHotel has no link into the entrance/gate graph (no field for it in the contract), so
- *    hotel zones are built but left unconnected — nothing currently routes through them.
+ *  - EventHotel has no explicit link into the entrance/gate graph (no field for it in the
+ *    contract), so a coach-served hotel is routed like a car arrival — same entrance the 'car'
+ *    transport option uses — a documented inference, not invented data. distanceToVenueM +
+ *    config.coachSpeedMPerMin gives the link its travel time; coachCapacity (if given) or
+ *    config.fallbackCoachCapPerMin gives it a cap. A hotel with coachOption=false gets a zone but
+ *    no link — still nothing routes through it (no cohort's path currently passes through a hotel
+ *    zone either way; buildGroups.ts derives path from travel mode, not hotelId).
  *  - Approach/concourse link capacity, travel time and area are config assumptions
  *    (config/engineGraphAssumptions.ts), mirroring engine/venueImport/buildGraph.ts's own
  *    defaults for the same missing-data problem, since Venue carries none of that either.
@@ -129,8 +134,14 @@ export function toEngineScenario(event: Event, venue: Venue, groups: CrowdGroup[
     }
   }
 
-  // hotel zones — built per "event hotels become hotel zones", but left unconnected: nothing in
-  // the contract links a hotel to an entrance/gate (see the file comment's "known gaps")
+  // hotel zones, connected to a gate for coach-served hotels: the contract has no explicit
+  // hotel->entrance field, so a coach is routed like a car (same entrance 'car' arrivals use) —
+  // documented inference, not invented data. distanceToVenueM + a road speed assumption gives the
+  // link its travel time; coachCapacity (if the sample gave one) becomes the link's cap.
+  const carOption = findMatchingTransportOption('car', event);
+  const carEntrance = carOption ? venue.entrances.find((e) => e.transportPointIds.includes(carOption.transportPointId)) : undefined;
+  const coachGateId = carEntrance?.gateIds[0] ?? venue.gates[0]?.id;
+
   for (const h of event.hotels) {
     zones.push({
       id: h.id,
@@ -142,6 +153,19 @@ export function toEngineScenario(event: Event, venue: Venue, groups: CrowdGroup[
       occupied: Math.round(num(h.occupied)),
       estimated: est(h.rooms.trust, h.occupied.trust),
     });
+    if (h.coachOption && coachGateId) {
+      const distanceM = num(h.distanceToVenueM);
+      links.push({
+        id: `link_hotel_${h.id}_${coachGateId}`,
+        from: h.id,
+        to: coachGateId,
+        name: `${h.name} coach to ${venue.gates.find((g) => g.id === coachGateId)?.name ?? coachGateId}`,
+        mode: 'road',
+        cap: h.coachCapacity ? Math.round(num(h.coachCapacity)) : G.fallbackCoachCapPerMin,
+        ff: Math.max(1, Math.round(distanceM / G.coachSpeedMPerMin)),
+        estimated: true,
+      });
+    }
   }
 
   // a single global laneRate (Scenario.laneRate) approximates every gate's own discounted

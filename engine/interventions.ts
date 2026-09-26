@@ -64,6 +64,12 @@ export function autoCandidates(scn: Scenario): Lever[] {
     C.push({ type: 'house', label: `Block-book empty far rooms for the ${comma(scn.lateBookings)} late bookings` });
   for (const f of scn.zones.filter((z) => z.type === 'food'))
     C.push({ type: 'food', zone: f.id, n: 2, from: mid, label: `Open 2 more stalls at ${f.name} from ${clock(mid)}` });
+  // transit links (walk/road/shuttle, not the gate-screening link itself) get a shuttle-boost
+  // lever sized off their own existing capacity — never a hardcoded link id
+  for (const l of scn.links.filter((l) => l.mode !== 'gate' && l.cap)) {
+    const add = Math.max(20, Math.round(l.cap! * 0.4));
+    C.push({ type: 'shuttle', link: l.id, add, vehicles: Math.max(4, Math.round(add / 20)), from: mid, label: `Run extra shuttles on ${l.name} from ${clock(mid)}` });
+  }
   return C;
 }
 
