@@ -1,0 +1,42 @@
+{
+  "appTitle": "विज़िटर प्लान",
+  "language": "भाषा",
+  "langEn": "English",
+  "langHi": "हिंदी",
+  "langMr": "मराठी",
+  "form": {
+    "comingFrom": "कहाँ से",
+    "comingFromPlaceholder": "क्षेत्र का नाम",
+    "howTravelling": "यात्रा का माध्यम",
+    "travelModes": {
+      "train": "ट्रेन",
+      "cab": "कैब",
+      "own_vehicle": "निजी वाहन",
+      "bus": "बस"
+    },
+    "stayingAt": "रहने का स्थान",
+    "stayingAtPlaceholder": "होटल का नाम (या कोई नहीं)",
+    "peopleInGroup": "समूह में लोग",
+    "submit": "मेरा प्लान देखें"
+  },
+  "plan": {
+    "stayLabel": "Stay",
+    "travelLabel": "Travel",
+    "gateLabel": "Gate",
+    "leaveAtLabel": "Leave at",
+    "eatLabel": "Eat",
+    "none": "कोई नहीं",
+    "coachIncluded": "बस उपलब्ध",
+    "why": "क्यों?",
+    "whyStayCoach": "होटल के लिए बस सेवा उपलब्ध।",
+    "whyStayNone": "कोई होटल बुक नहीं है।",
+    "whyTravel": "भीड़ से बचने का सही समय।",
+    "whyGate": "आपकी यात्रा के निकटतम गेट।",
+    "whyLeaveAt": "कार्यक्रम के बाद भीड़ से बचें।",
+    "whyEat": "सुगम भोजन के लिए आरक्षित समय।"
+  },
+  "banner": {
+    "planUpdated": "प्लान अपडेट हुआ",
+    "seeChanges": "बदलाव देखें"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "appTitle": "Visitor Plan",
+  "language": "Language",
+  "langEn": "English",
+  "langHi": "हिंदी",
+  "langMr": "मराठी",
+  "form": {
+    "comingFrom": "Coming from",
+    "comingFromPlaceholder": "Area or city name",
+    "howTravelling": "How travelling",
+    "travelModes": {
+      "train": "Train",
+      "cab": "Cab",
+      "own_vehicle": "Own vehicle",
+      "bus": "Bus"
+    },
+    "stayingAt": "Staying at",
+    "stayingAtPlaceholder": "Hotel name (or None)",
+    "peopleInGroup": "People in group",
+    "submit": "Get my plan"
+  },
+  "plan": {
+    "stayLabel": "Stay",
+    "travelLabel": "Travel",
+    "gateLabel": "Gate",
+    "leaveAtLabel": "Leave at",
+    "eatLabel": "Eat",
+    "none": "None",
+    "coachIncluded": "Coach",
+    "why": "Why?",
+    "whyStayCoach": "Dedicated coach provided for hotel.",
+    "whyStayNone": "No hotel stay requested.",
+    "whyTravel": "Scheduled to avoid peak crowds.",
+    "whyGate": "Fastest entry for your mode.",
+    "whyLeaveAt": "Prevents post-event bottleneck exit.",
+    "whyEat": "Reserved slot for smooth dining."
+  },
+  "banner": {
+    "planUpdated": "Plan updated",
+    "seeChanges": "See changes"
+  }
+}
