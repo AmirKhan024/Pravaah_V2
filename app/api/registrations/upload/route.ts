@@ -69,13 +69,13 @@ export async function POST(request: Request) {
   }
 
   const mapping = await mapColumns(headers, rows.slice(0, 5));
-  const { registrations, dropped, valueMappings } = await normalizeRegistrations(rows, mapping, event);
-  const { groups, unroutedTotal, unroutedByMode } = buildGroups(registrations, event, venue);
+  const { registrations: normalized, dropped, valueMappings } = await normalizeRegistrations(rows, mapping, event);
+  const { groups, unroutedTotal, unroutedByMode, registrations } = buildGroups(normalized, event, venue);
 
   let saveStatus: { ok: true } | { ok: false; error: string } = { ok: true };
   try {
     const supabase = getServiceRoleClient();
-    const { error: regError } = await supabase.from('registrations').upsert(registrations.map((r) => ({ id: r.id, event_id: r.eventId, data: r })));
+    const { error: regError } = await supabase.from('registrations').upsert(registrations.map((r) => ({ id: r.id, event_id: r.eventId, group_id: r.groupId, data: r })));
     if (regError) throw regError;
     const { error: groupError } = await supabase.from('crowd_groups').upsert(groups.map((g) => ({ id: g.id, event_id: event.id, data: g })));
     if (groupError) throw groupError;

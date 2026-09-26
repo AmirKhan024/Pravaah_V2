@@ -174,6 +174,9 @@ export const RegistrationSchema = z.object({
   /** the untouched row exactly as the source file had it — messy column names, blanks, whatever */
   raw: z.record(z.string(), z.unknown()),
   normalized: RegistrationNormalizedSchema,
+  /** which CrowdGroup this registration was bucketed into by buildGroups.ts — null if the
+   * registration was unrouted (see BuildGroupsResult.unroutedByMode) */
+  groupId: z.string().nullable(),
 });
 export type Registration = z.infer<typeof RegistrationSchema>;
 
@@ -255,6 +258,9 @@ export const PlanSchema = z.object({
   status: PlanStatusSchema,
   approvedBy: z.string().nullable(),
   approvedAt: z.iso.datetime().nullable(),
+  /** bumped by publishPlan() on every publish — the real counter (see supabase/schema.sql's
+   * plans.version column); replaces the old ledger-entry-counting workaround */
+  version: z.number().int().nonnegative(),
 });
 export type Plan = z.infer<typeof PlanSchema>;
 

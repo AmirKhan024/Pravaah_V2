@@ -9,35 +9,21 @@ export interface PublishResult {
   saveStatus: SaveStatus;
 }
 
-/**
- * The `plans`/`visitor_plans` tables carry no dedicated version counter (see summary: this would
- * be a clean schema addition). Standing in for one: every publish appends a ledger entry tagged
- * `payload.event === 'plan_published'` (see append() below) — counting those for the event *is*
- * the version number, with no new column needed.
- */
-export async function getPublishVersion(eventId: string): Promise<number> {
-  const supabase = getServiceRoleClient();
-  const { count, error } = await supabase.from('ledger_entries').select('seq', { count: 'exact', head: true }).eq('event_id', eventId).eq('payload->>event', 'plan_published');
-  if (error) throw error;
-  return count ?? 0;
-}
-
-/** Allowed only when the plan's current status is "approved". Bumps the version (see
- * getPublishVersion) and appends the ledger entry that both records the decision and defines the
- * new version count. */
+/** Allowed only when the plan's current status is "approved". Bumps plans.version (a real
+ * column — see supabase/schema.sql) and appends a ledger entry recording the decision. */
 export async function publishPlan(eventId: string, planId: string): Promise<PublishResult> {
   try {
     const supabase = getServiceRoleClient();
-    const { data: plan, error: planErr } = await supabase.from('plans').select('id,status').eq('id', planId).eq('event_id', eventId).maybeSingle();
+    const { data: plan, error: planErr } = await supabase.from('plans').select('id,status,version').eq('id', planId).eq('event_id', eventId).maybeSingle();
     if (planErr) throw planErr;
     if (!plan) return { ok: false, reason: 'plan not found', saveStatus: { ok: true } };
     if (plan.status !== 'approved') {
       return { ok: false, reason: `plan status is "${plan.status}", not "approved"`, saveStatus: { ok: true } };
     }
 
-    const version = (await getPublishVersion(eventId)) + 1;
+    const version = (plan.version ?? 0) + 1;
 
-    const { error: updateErr } = await supabase.from('plans').update({ status: 'published' }).eq('id', planId);
+    const { error: updateErr } = await supabase.from('plans').update({ status: 'published', version }).eq('id', planId);
     if (updateErr) throw updateErr;
 
     await append(eventId, {

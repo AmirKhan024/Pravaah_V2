@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { CrowdGroup, Event, InterventionShape, Lang, TravelMode, Venue } from '../../../contract/schemas';
 import { VisitorPlanSchema } from '../../../contract/schemas';
-import { getPublishVersion } from '../../../lib/server/publish/publish';
 import { getServiceRoleClient } from '../../../lib/server/supabase/client';
 import { buildVisitorPlanFields } from '../../../lib/server/visitorPlan/build';
 import { matchCrowdGroup } from '../../../lib/server/visitorPlan/match';
@@ -10,15 +9,16 @@ const VALID_LANGS: Lang[] = ['mr', 'hi', 'en'];
 const VALID_MODES: TravelMode[] = ['train', 'metro', 'bus', 'car', 'walk', 'other'];
 
 /**
- * GET /api/visitor-plan?event=&from=&mode=&hotel=&group=&lang= — `from` (origin) and `group`
- * (party size) are accepted but not used to match: CrowdGroups aren't keyed by either (see
- * lib/server/visitorPlan/match.ts and buildGroups.ts's bucketKey comment). registrationId is stood
- * in with the matched group's own id — there's no durable registration->group link yet to resolve
- * one specific registrant (see branch summary).
+ * GET /api/visitor-plan?event=&registration=&from=&mode=&hotel=&group=&lang= — when `registration`
+ * (a registration id) is given, its saved group_id (see buildGroups.ts/registrations.group_id) is
+ * used directly, resolving one specific registrant exactly. Otherwise falls back to matching by
+ * mode/hotel (see lib/server/visitorPlan/match.ts). `from` (origin) and `group` (party size) are
+ * accepted but never used to match: CrowdGroups aren't keyed by either.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const eventId = url.searchParams.get('event');
+  const registrationId = url.searchParams.get('registration');
   const modeParam = url.searchParams.get('mode');
   const hotelParam = url.searchParams.get('hotel');
   const langParam = url.searchParams.get('lang');
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
     const { data: planRow, error: planErr } = await supabase
       .from('plans')
-      .select('id,status,data')
+      .select('id,status,data,version')
       .eq('event_id', eventId)
       .eq('status', 'published')
       .order('created_at', { ascending: false })
@@ -53,17 +53,22 @@ export async function GET(request: Request) {
     if (groupErr) throw groupErr;
     const groups = ((groupRows ?? []) as Array<{ data: CrowdGroup }>).map((r) => r.data);
 
-    const group = matchCrowdGroup(groups, event, { mode, hotel: hotelParam ?? undefined });
-    if (!group) return NextResponse.json({ reason: 'no matching crowd group for this mode/hotel' }, { status: 404 });
+    let group: CrowdGroup | null = null;
+    if (registrationId) {
+      const { data: regRow } = await supabase.from('registrations').select('group_id').eq('id', registrationId).eq('event_id', eventId).maybeSingle();
+      if (regRow?.group_id) group = groups.find((g) => g.id === regRow.group_id) ?? null;
+    }
+    if (!group) group = matchCrowdGroup(groups, event, { mode, hotel: hotelParam ?? undefined });
+    if (!group) return NextResponse.json({ reason: 'no matching crowd group for this registration/mode/hotel' }, { status: 404 });
 
     const levers = planRow.data as InterventionShape[];
-    const version = await getPublishVersion(eventId);
+    const version = planRow.version as number;
     const fields = await buildVisitorPlanFields(group, venue, event, levers, lang);
 
     const visitorPlan = VisitorPlanSchema.parse({
       id: `vp_${eventId}_${group.id}_${version}`,
       eventId,
-      registrationId: group.id,
+      registrationId: registrationId ?? group.id,
       stay: fields.stay,
       travel: fields.travel,
       gate: fields.gate,

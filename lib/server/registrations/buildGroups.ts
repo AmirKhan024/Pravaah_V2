@@ -12,6 +12,10 @@ export interface BuildGroupsResult {
   groups: CrowdGroup[];
   unroutedTotal: number;
   unroutedByMode: UnroutedByMode[];
+  /** same registrations, each with `groupId` set to whichever final CrowdGroup it landed in
+   * (null if unrouted) — the caller (app/api/registrations/upload/route.ts) saves this back so a
+   * registration durably maps to a crowd group (see registrations.group_id in schema.sql) */
+  registrations: Registration[];
 }
 
 interface Bucket {
@@ -24,6 +28,7 @@ interface Bucket {
 
 /** A routed bucket, before the small-group merge pass. */
 interface Candidate {
+  bucketKey: string;
   size: number;
   mean: number;
   std: number;
@@ -142,6 +147,7 @@ export function buildGroups(registrations: Registration[], event: Event, venue: 
     const hotelName = b.hotelId ? (event.hotels.find((h) => h.id === b.hotelId)?.name ?? b.hotelId) : null;
 
     candidates.push({
+      bucketKey: b.key,
       size,
       mean,
       std,
@@ -171,9 +177,14 @@ export function buildGroups(registrations: Registration[], event: Event, venue: 
   }
 
   const gateName = (gateId: string) => venue.gates.find((g) => g.id === gateId)?.name ?? gateId;
+  const bucketKeyToGroupId = new Map<string, string>();
 
   const groups: CrowdGroup[] = [
-    ...big.map((c, i) => toCrowdGroup(`grp_${i}_${slug(c.label)}`, c)),
+    ...big.map((c, i) => {
+      const id = `grp_${i}_${slug(c.label)}`;
+      bucketKeyToGroupId.set(c.bucketKey, id);
+      return toCrowdGroup(id, c);
+    }),
     ...[...merged.values()].map((cluster, i) => {
       const size = cluster.members.reduce((s, m) => s + m.size, 0);
       const mean = cluster.members.reduce((s, m) => s + m.mean * m.size, 0) / size;
@@ -184,7 +195,9 @@ export function buildGroups(registrations: Registration[], event: Event, venue: 
       // representative path/pulse: the largest contributing member's — pulse/path only vary by
       // mode+gate anyway, which every member in a cluster shares, so this is just a stable pick
       const representative = [...cluster.members].sort((a, b) => b.size - a.size)[0];
-      return toCrowdGroup(`grp_merged_${i}_${slug(cluster.travelMode + '_' + cluster.gateId)}`, {
+      const id = `grp_merged_${i}_${slug(cluster.travelMode + '_' + cluster.gateId)}`;
+      for (const m of cluster.members) bucketKeyToGroupId.set(m.bucketKey, id);
+      return toCrowdGroup(id, {
         size,
         mean,
         std,
@@ -197,5 +210,6 @@ export function buildGroups(registrations: Registration[], event: Event, venue: 
   ];
 
   const unroutedByMode = [...unroutedByModeMap.values()];
-  return { groups, unroutedTotal: unroutedByMode.reduce((s, u) => s + u.size, 0), unroutedByMode };
+  const withGroupId = registrations.map((r) => ({ ...r, groupId: bucketKeyToGroupId.get(bucketKey(r)) ?? null }));
+  return { groups, unroutedTotal: unroutedByMode.reduce((s, u) => s + u.size, 0), unroutedByMode, registrations: withGroupId };
 }

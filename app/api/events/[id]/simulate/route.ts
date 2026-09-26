@@ -52,6 +52,16 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const clock = (tick: number) => minutesToClock(scenario.t0Min + tick);
   const firstDangerousTick = base.crushSeries.findIndex((v) => v > 0);
 
+  // expectedCountsPerGate: total simulated throughput at each gate's concourse link, summed
+  // across every frame's flow — the baseline lib/server/live/gateScanDrift.ts compares a live
+  // gate_scan report against (see that file's SimulationResultPayloadSchema).
+  const expectedCountsPerGate: Record<string, number> = {};
+  for (const g of venue.gates) {
+    const linkIdx = scenario.links.findIndex((l) => l.id === `link_${g.id}_venue`);
+    if (linkIdx < 0) continue;
+    expectedCountsPerGate[g.id] = Math.round(base.frames.reduce((s, f) => s + (f.linkFlow[linkIdx] || 0), 0));
+  }
+
   const summary = {
     eventId,
     dangerousMinutes: base.crushMin,
@@ -67,6 +77,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       missed: plan.result.missed,
     },
     ablation: ablation.map((a) => ({ name: a.name, detail: a.detail, removed: a.removed, left: a.left })),
+    expectedCountsPerGate,
   };
 
   const { error: saveError } = await supabase.from('simulation_results').upsert({ id: `sim_${eventId}_${Date.now()}`, event_id: eventId, data: summary });

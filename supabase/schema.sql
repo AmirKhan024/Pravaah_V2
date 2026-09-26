@@ -46,10 +46,15 @@ create index if not exists events_venue_idx on events(venue_id);
 create table if not exists registrations (
   id         text primary key,
   event_id   text not null references events(id) on delete cascade,
-  data       jsonb not null,        -- Registration: { raw, normalized }
+  -- no FK to crowd_groups(id): that table is created further down this file, and a forward
+  -- reference would fail a fresh apply. Plain nullable column instead — buildGroups.ts writes it.
+  group_id   text,
+  data       jsonb not null,        -- Registration: { raw, normalized, groupId }
   created_at timestamptz not null default now()
 );
 create index if not exists registrations_event_idx on registrations(event_id);
+create index if not exists registrations_group_idx on registrations(group_id);
+alter table registrations add column if not exists group_id text;
 
 create table if not exists crowd_groups (
   id         text primary key,
@@ -65,10 +70,12 @@ create table if not exists plans (
   status      text not null default 'draft' check (status in ('draft', 'approved', 'published')),
   approved_by text,
   approved_at timestamptz,
+  version     integer not null default 0,  -- bumped by publishPlan() on every publish
   data        jsonb not null,       -- Plan.levers (Intervention[])
   created_at  timestamptz not null default now()
 );
 create index if not exists plans_event_idx on plans(event_id);
+alter table plans add column if not exists version integer not null default 0;
 
 create table if not exists orders (
   id         text primary key,

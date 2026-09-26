@@ -156,7 +156,7 @@ export async function normalizeRegistrations(rawRows: Array<Record<string, strin
       return;
     }
 
-    registrations.push({ id: `${event.id}_reg_${i + 1}`, eventId: event.id, raw: row, normalized: check.data });
+    registrations.push({ id: `${event.id}_reg_${i + 1}`, eventId: event.id, raw: row, normalized: check.data, groupId: null });
   });
 
   return { registrations, dropped, valueMappings: { travelMode: travelModeMap, area: areaMap, hotel: hotelMap } };

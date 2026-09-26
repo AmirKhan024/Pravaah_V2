@@ -20,6 +20,7 @@ function reg(id: string, eventId: string, overrides: Partial<Registration['norma
     eventId,
     raw: {},
     normalized: { originArea: 'Kharghar', travelMode: 'metro', hotelId: null, groupSize: 1, gateHint: null, ...overrides },
+    groupId: null,
   };
 }
 
