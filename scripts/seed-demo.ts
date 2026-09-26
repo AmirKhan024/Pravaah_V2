@@ -1,9 +1,17 @@
-// Seeds both sample events (stadium, procession) into Supabase: venue, event, registrations
-// (from the small CSV — fast, and matches what contract/contract.test.ts already validates),
+// Seeds every sample event (stadium, procession, calm) into Supabase: venue, event, registrations
+// (from the small/calm CSV — fast, and matches what contract/contract.test.ts already validates),
 // crowd groups, and a simulation result. Idempotent: every write is an upsert keyed by the
 // sample's own ids, so running this twice never duplicates a row.
+import { existsSync } from 'node:fs';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+
+// tsx doesn't auto-load .env.local the way `next dev` does — load it (and .env, as a fallback for
+// anything .env.local doesn't set) so this script never needs vars exported in the shell first.
+for (const file of ['.env.local', '.env']) {
+  const p = path.join(import.meta.dirname, '..', file);
+  if (existsSync(p)) process.loadEnvFile(p);
+}
 import { toEngineScenario } from '../contract/engine-adapter';
 import { EventSchema, VenueSchema } from '../contract/schemas';
 import { buildGroups } from '../lib/server/registrations/buildGroups';
@@ -49,6 +57,7 @@ async function seedEvent(label: string, eventFile: string, venueFile: string, cs
 async function main() {
   await seedEvent('stadium', 'event-stadium.json', 'venue-stadium.json', 'registrations-stadium-small.csv');
   await seedEvent('procession', 'event-procession.json', 'venue-procession.json', 'registrations-procession-small.csv');
+  await seedEvent('calm', 'event-calm.json', 'venue-stadium.json', 'registrations-calm.csv');
   console.log('\ndone.');
 }
 

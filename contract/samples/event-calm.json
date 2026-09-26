@@ -1,0 +1,40 @@
+{
+  "sample": true,
+  "id": "event_stadium_calm_gathering",
+  "name": "Community Open House",
+  "venueId": "venue_dy_patil",
+  "date": "2026-12-05",
+  "gatesOpen": "16:00",
+  "showStart": "18:00",
+  "endTime": "20:00",
+  "hotels": [],
+  "transportOptions": [
+    {
+      "id": "opt_metro",
+      "mode": "metro",
+      "transportPointId": "tp_kharghar_metro",
+      "timetable": [
+        { "arrivalTime": "16:10", "pulseSize": { "value": 300, "trust": "claimed" } },
+        { "arrivalTime": "16:40", "pulseSize": { "value": 450, "trust": "claimed" } }
+      ]
+    },
+    {
+      "id": "opt_train",
+      "mode": "train",
+      "transportPointId": "tp_panvel_station",
+      "timetable": [{ "arrivalTime": "16:05", "pulseSize": { "value": 250, "trust": "claimed" } }]
+    },
+    {
+      "id": "opt_bus",
+      "mode": "bus",
+      "transportPointId": "tp_bus_stand",
+      "timetable": [{ "arrivalTime": "16:15", "pulseSize": { "value": 150, "trust": "claimed" } }]
+    },
+    {
+      "id": "opt_car",
+      "mode": "car",
+      "transportPointId": "tp_parking_north",
+      "timetable": [{ "arrivalTime": "16:20", "pulseSize": { "value": 200, "trust": "claimed" } }]
+    }
+  ]
+}
