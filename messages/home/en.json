@@ -1,0 +1,11 @@
+{
+  "picker": {
+    "label": "Event",
+    "empty": "No events yet"
+  },
+  "cards": {
+    "organiser": "Organiser",
+    "venue_owner": "Venue owner",
+    "visitor": "Visitor"
+  }
+}
