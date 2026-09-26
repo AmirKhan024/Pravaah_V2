@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { LIVE_SUMMARY_WINDOW_MIN } from '../../../../config/server-extras';
 import { LiveReportSchema, type SaveStatus } from '../../../../contract/schemas';
 import { applyReport } from '../../../../lib/server/live/replan';
+import { rerunFromPatch } from '../../../../lib/server/live/rerun';
 import { getServiceRoleClient } from '../../../../lib/server/supabase/client';
 import { countRecentZoneReports, revealIfAboveThreshold, sanitizeVisitorLocationPayload } from '../../../../lib/server/live/visitorLocation';
 
@@ -67,6 +68,9 @@ export async function POST(request: Request) {
 
   const { patch, needsRerun, detail } = await applyReport(eventId, report);
 
-  if (source === 'gate_scan') return NextResponse.json({ report, drift: needsRerun, detail, saveStatus });
-  return NextResponse.json({ report, patch, needsRerun, detail, saveStatus });
+  let rerun: { ok: boolean; reason?: string } | undefined;
+  if (needsRerun) rerun = await rerunFromPatch(eventId, patch, detail);
+
+  if (source === 'gate_scan') return NextResponse.json({ report, drift: needsRerun, detail, saveStatus, rerun });
+  return NextResponse.json({ report, patch, needsRerun, detail, saveStatus, rerun });
 }
