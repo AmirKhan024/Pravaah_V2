@@ -12,33 +12,29 @@ import { optimiseProfile } from '../../../../../engine/optimise';
 
 const ENSEMBLE_RUNS = 60;
 
+/** POST /simulate never blocks past this long — see runSimulationWithTimeout(). */
+const SIMULATE_TIMEOUT_MS = 60_000;
+
+type RunResult = { ok: true; summary: Record<string, unknown> } | { ok: false; error: string; status: number };
+
 /**
- * Loads event/venue/crowd_groups for `id` from Supabase, builds an engine Scenario via
- * toEngineScenario(), runs simulate + ensemble + ablation + optimiser, returns a short summary,
- * and saves it to simulation_results. Read-only against engine/ — never edits it.
+ * Loads event/venue/crowd_groups for `id` from Supabase and runs simulate + ensemble + ablation +
+ * optimiser, returning a short summary. Read-only against engine/ — never edits it. Shared by both
+ * GET (always waits for the full result) and POST (races it against a timeout — see below).
  */
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id: eventId } = await params;
-
-  let supabase;
-  try {
-    supabase = getServiceRoleClient();
-  } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Supabase not configured' }, { status: 503 });
-  }
-
+async function runSimulation(eventId: string, supabase: ReturnType<typeof getServiceRoleClient>): Promise<RunResult> {
   const { data: eventRow, error: eventError } = await supabase.from('events').select('data, venue_id').eq('id', eventId).single();
-  if (eventError || !eventRow) return NextResponse.json({ error: `event "${eventId}" not found` }, { status: 404 });
+  if (eventError || !eventRow) return { ok: false, error: `event "${eventId}" not found`, status: 404 };
   const eventParsed = EventSchema.safeParse(eventRow.data);
-  if (!eventParsed.success) return NextResponse.json({ error: 'stored event failed validation', issues: eventParsed.error.issues }, { status: 500 });
+  if (!eventParsed.success) return { ok: false, error: 'stored event failed validation', status: 500 };
 
   const { data: venueRow, error: venueError } = await supabase.from('venues').select('data').eq('id', eventRow.venue_id).single();
-  if (venueError || !venueRow) return NextResponse.json({ error: `venue "${eventRow.venue_id}" not found` }, { status: 404 });
+  if (venueError || !venueRow) return { ok: false, error: `venue "${eventRow.venue_id}" not found`, status: 404 };
   const venueParsed = VenueSchema.safeParse(venueRow.data);
-  if (!venueParsed.success) return NextResponse.json({ error: 'stored venue failed validation', issues: venueParsed.error.issues }, { status: 500 });
+  if (!venueParsed.success) return { ok: false, error: 'stored venue failed validation', status: 500 };
 
   const { data: groupRows, error: groupError } = await supabase.from('crowd_groups').select('data').eq('event_id', eventId);
-  if (groupError) return NextResponse.json({ error: groupError.message }, { status: 500 });
+  if (groupError) return { ok: false, error: groupError.message, status: 500 };
   const groups = (groupRows ?? []).map((r) => CrowdGroupSchema.parse(r.data));
 
   // people-conservation input: how many registered PEOPLE (sum of groupSize, not rows) never got
@@ -99,7 +95,59 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     expectedCountsPerGate,
   };
 
-  const { error: saveError } = await supabase.from('simulation_results').upsert({ id: `sim_${eventId}_${Date.now()}`, event_id: eventId, data: summary });
+  return { ok: true, summary };
+}
 
-  return NextResponse.json({ summary, saved: !saveError, ...(saveError ? { saveError: saveError.message } : {}) });
+/** GET builds and returns the full result — unchanged behaviour, kept for existing callers. */
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id: eventId } = await params;
+
+  let supabase;
+  try {
+    supabase = getServiceRoleClient();
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Supabase not configured' }, { status: 503 });
+  }
+
+  const result = await runSimulation(eventId, supabase);
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+
+  const { error: saveError } = await supabase.from('simulation_results').upsert({ id: `sim_${eventId}_${Date.now()}`, event_id: eventId, data: result.summary });
+  return NextResponse.json({ summary: result.summary, saved: !saveError, ...(saveError ? { saveError: saveError.message } : {}) });
+}
+
+/**
+ * POST kicks off the same run but never blocks the response past SIMULATE_TIMEOUT_MS: if the
+ * engine run + save finishes first, the response carries the result directly (status "done"); if
+ * it's still going after the timeout, POST returns status "running" and the id to poll — the run
+ * keeps going in the background (this process stays alive; see the "running" branch below) and
+ * saves to simulation_results under that same id once it finishes, for
+ * GET /api/events/[id]/simulate/status?id=<id> to pick up.
+ */
+export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id: eventId } = await params;
+
+  let supabase;
+  try {
+    supabase = getServiceRoleClient();
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Supabase not configured' }, { status: 503 });
+  }
+
+  const runId = `sim_${eventId}_${Date.now()}`;
+
+  const computeAndSave: Promise<RunResult> = runSimulation(eventId, supabase).then(async (result) => {
+    if (result.ok) await supabase.from('simulation_results').upsert({ id: runId, event_id: eventId, data: result.summary });
+    return result;
+  });
+
+  const timedOut = Symbol('timeout');
+  const timeout = new Promise<typeof timedOut>((resolve) => setTimeout(() => resolve(timedOut), SIMULATE_TIMEOUT_MS));
+
+  const race = await Promise.race([computeAndSave, timeout]);
+  if (race === timedOut) return NextResponse.json({ id: runId, status: 'running' });
+
+  const result = race as RunResult;
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
+  return NextResponse.json({ id: runId, status: 'done', summary: result.summary });
 }
